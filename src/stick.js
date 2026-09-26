@@ -10,7 +10,8 @@ const JOY_R = 24; // 原点が指を追う半径。ここまで倒すと最大�
 const JOY_HYST = 1.2;
 const JOY_UP = 14; // これ以上上に倒すと「上」
 
-export function createStick({ dom, canvas, input, isPlayable, digital4 = false, onUp = null }) {
+// area: "left"（既定。画面の左半分）/ "canvas"（canvas の上ならどこでも。咲耶Nounラリー方式）
+export function createStick({ dom, canvas, input, isPlayable, digital4 = false, onUp = null, area = "left" }) {
   const { joyRing, joyKnob, joyHint, joyHintCap } = dom;
   let joy = null; // { id, ox, oy }
   let taught = false; // 一度でも倒したら、そのプレイではもう影を出さない
@@ -69,7 +70,10 @@ export function createStick({ dom, canvas, input, isPlayable, digital4 = false, 
     "pointerdown",
     (e) => {
       if (joy || !playable()) return;
-      if (e.clientX >= window.innerWidth / 2) return;
+      if (area === "canvas") {
+        const r = canvas.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+      } else if (e.clientX >= window.innerWidth / 2) return;
       // ボタン(ポーズ等)の上では出さない。ボタン自身の操作を優先する
       if (e.target && e.target.closest && e.target.closest("button, input, a")) return;
       e.preventDefault();

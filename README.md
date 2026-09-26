@@ -20,14 +20,14 @@
 ## 使い方
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.1.0/kit.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.css">
 
 <div class="sk-wrap">
   <canvas id="game" width="960" height="540"></canvas>
 </div>
 
 <script type="module">
-  import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.1.0/kit.js";
+  import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.js";
 
   const kit = createKit({
     gameId: "scramble",                 // ランキングのシート名になる（英数字・-・_）
@@ -67,7 +67,7 @@
 
 ### バージョンは必ず固定する
 
-`@0.1.0` のようにタグを指定して読み込みます。kit を更新しても、古いタイトルは指定したバージョンのまま動き続けます。
+`@0.2.0` のようにタグを指定して読み込みます。kit を更新しても、古いタイトルは指定したバージョンのまま動き続けます。
 更新を取り込むときは、タイトル側の URL の番号を上げ、実機で確認してから公開します。
 
 ## 設定 (`createKit(cfg)`)
@@ -85,6 +85,7 @@
 | `maxScore` | なし | これを超える記録は登録フォームを出さない（GAS の `_games` のスコア上限と同じ値にする） |
 | `rankingLabels` | `{ clear: "クリア", progress: "進行" }` | ランキングの2段目の言葉（ラリーなら `progress: "踏破"`） |
 | `controls.stick` | `true` | 左半分のバーチャルスティック |
+| `controls.stickArea` | `"left"` | スティックを出せる範囲。`"canvas"` にすると canvas の上ならどこでも（迷路系向け） |
 | `controls.stickDigital4` | `false` | スティックを4方向に丸める（迷路系向け） |
 | `controls.stickSensitivity` | `0.5` | いっぱいに倒したときの強さ（キー入力 = 1） |
 | `controls.gyro` | `false` | 傾き操作。下の「ジャイロ操作」を参照 |
@@ -226,6 +227,15 @@ OGP は X や LINE のクローラが `<head>` を直接読んで作ります。
 - **アイコン：** 黒地に金の枠と中央のモチーフ。モチーフは、キービジュアルの一部か文字・絵文字をタイトルごとに選びます
 - `createKit` の title/subtitle と `<title>` がずれていると、kit が開発者コンソールに警告を出します
 
+## 画面の大きさ
+
+canvas の大きさ（`width` / `height` 属性）はタイトルごとに自由です（スクランブル 960×540、ラリー 826×384 など）。
+表示の大きさは kit.css が縦横比を保ったまま決めます。
+
+- PC・スマホ縦持ち: 幅は画面の 92%（最大 960px）、高さは画面の 72% まで
+- スマホ横持ち: 画面の高さいっぱいまで
+- 立ち絵やレーダーのようなサイドパネルが要るときは、canvas を横に広げて canvas の中に描きます（ラリー方式）
+
 ## 色を変えたいとき
 
 部品の寸法、配置、ベベルは変えません。変えてよいのは色トークンだけで、kit.css の後に書きます。
@@ -277,10 +287,10 @@ function importLegacy() {
 ### ゲームの無いページに総合ランキングだけ出す
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.1.0/kit.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.css">
 <section id="board"></section>
 <script type="module">
-  import { mountOverallRanking } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.1.0/kit.js";
+  import { mountOverallRanking } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.js";
   mountOverallRanking(document.getElementById("board"), { gasUrl: "https://script.google.com/macros/s/.../exec", limit: 50 });
 </script>
 ```

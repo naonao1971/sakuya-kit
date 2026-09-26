@@ -93,6 +93,8 @@ export function createKit(cfg) {
     toggles: [],
     // 自動連射。{ onFire, interval, defaultOn, key, button, tapMs }（下の「自動連射」参照）
     autoFire: null,
+    // スティックを出せる範囲。"left"（画面の左半分）/ "canvas"（canvas の上ならどこでも）
+    stickArea: "left",
     // スティックを上に倒したとき押すボタンの id（ジャンプ等）
     stickUpButton: null,
     // 画面の右半分を押している間押すボタンの id（ボタンが見えにくい端末でも操作できる）
@@ -119,6 +121,16 @@ export function createKit(cfg) {
   const listeners = {};
 
   const dom = injectDom(cfg, canvas);
+  if (controls.stickArea === "canvas") dom.joyHintCap.textContent = "どこでも押したまま倒す";
+
+  // canvas の縦横比と、実際の表示の高さ（kit.css の大きさの計算に使う）
+  document.documentElement.style.setProperty("--sk-aspect", String(canvas.width / canvas.height));
+  const setVh = () => {
+    if (window.innerHeight > 80) document.documentElement.style.setProperty("--sk-vh", `${window.innerHeight}px`);
+  };
+  setVh();
+  window.addEventListener("resize", setVh);
+  window.addEventListener("orientationchange", () => setTimeout(setVh, 300));
   const status = (msg) => {
     dom.status.textContent = msg || "";
   };
@@ -232,6 +244,7 @@ export function createKit(cfg) {
         // スティックと置き場所の影はタッチ端末だけ（PCで左側をクリックしても出さない）
         isPlayable: () => isMobile && isPlayable(),
         digital4: controls.stickDigital4,
+        area: controls.stickArea,
         onUp: controls.stickUpButton ? (up) => pressById(controls.stickUpButton, up, "stick") : null,
       })
     : null;
@@ -728,6 +741,8 @@ export function createKit(cfg) {
     ranking.hideForm();
     resetInputs();
     if (stick) stick.resetTeaching();
+    // ランキングまで下りてから遊び直したときは、ゲーム画面へ戻す
+    if (window.scrollY > 0) window.scrollTo({ top: 0 });
     score.reset();
     if (lives) lives.reset();
     checkpoint.reset();
