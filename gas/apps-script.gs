@@ -389,3 +389,62 @@ function doPost(e) {
 function jsonOut_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
+
+// ── 旧版のスプレッドシートからの取り込み ─────────────────────────
+// 各タイトルが別々のスプレッドシートにスコアを持っていた頃の記録を、このスプレッドシートの
+// タイトル別シートへ写す。Apps Script の画面で、関数を選んで「実行」する（ゲームからは呼ばれない）。
+//   importLegacySheet_("rally", "<旧スプレッドシートのID>", "ranking")
+// 同じ記録（スコア・ニックネーム・登録日時が同じ）は写さないので、何回実行しても二重にならない。
+// 旧版のシートの列の並び・名前（踏破率・はい/いいえ）はそのまま読める。
+function importLegacySheet_(game, spreadsheetId, sourceSheetName) {
+  const g = resolveGame_(game, true);
+  if (!g) throw new Error("invalid game: " + game);
+  const src = SpreadsheetApp.openById(spreadsheetId).getSheetByName(sourceSheetName || "ranking");
+  if (!src) throw new Error("シートが見つかりません: " + (sourceSheetName || "ranking"));
+  const key = function (r) {
+    return [r.score, r.nickname, r.created].join("|");
+  };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  let added = 0;
+  let skipped = 0;
+  try {
+    const dest = scoreSheet_(g.sheet, true);
+    const m = ensureColumns_(dest);
+    const seen = {};
+    readRecords_(dest).forEach(function (r) {
+      seen[key(r)] = true;
+    });
+    const width = Math.max.apply(null, Object.keys(m).map(function (k) { return m[k]; })) + 1;
+    readRecords_(src).forEach(function (r) {
+      if (seen[key(r)]) {
+        skipped++;
+        return;
+      }
+      const values = {
+        score: r.score,
+        nickname: r.nickname,
+        xid: r.xid,
+        created: r.created ? new Date(r.created) : "",
+        device: r.device,
+        rescued: r.rescued,
+        cnp: r.cnp,
+        cleared: r.cleared,
+        progress: r.progress == null ? "" : r.progress,
+      };
+      const row = new Array(width).fill("");
+      Object.keys(values).forEach(function (f) {
+        if (m[f] !== undefined) row[m[f]] = values[f];
+      });
+      dest.appendRow(row);
+      seen[key(r)] = true;
+      added++;
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  CacheService.getScriptCache().remove(OVERALL_CACHE_KEY);
+  Logger.log(game + ": " + added + " 件を取り込み、" + skipped + " 件は取り込み済みのため飛ばしました");
+  return added;
+}
+

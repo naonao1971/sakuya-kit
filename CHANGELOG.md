@@ -6,6 +6,7 @@
 ## 未リリース（main）
 
 - GAS（`gas/apps-script.gs`）: 旧版のラリーが送る `paint`（踏破率）を進行度として受け取り、旧版のシートの「クリア」列の `はい` をクリアとして読むようにした。
+- GAS: 旧版の各タイトルのスプレッドシートから記録を写す `importLegacySheet_(game, spreadsheetId, sheetName)` を足した（Apps Script の画面から1回実行する。二重には入らない）
   GAS はスプレッドシートに貼って使うもので、各タイトルが CDN から読むものではないため、タグとは関係なく main の最新を貼る
 
 ## 0.1.0
