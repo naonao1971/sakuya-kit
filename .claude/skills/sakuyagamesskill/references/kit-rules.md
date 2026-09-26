@@ -1,8 +1,3 @@
----
-name: sakuyagamesskill
-description: 咲耶シリーズのブラウザゲーム（レトロアーケード風・canvas）を新しく作る、または既存タイトルを直すときに使う。共通UI（コントローラー／ポーズ／スコア登録／ランキング／CNP／CLEAR・GAME OVERの演出動画と結果画面／全画面／効果音）は必ず sakuya-kit を使い、タイトル側で作り直さない。
----
-
 # 咲耶シリーズ ゲーム制作ルール
 
 ## 大原則
@@ -18,7 +13,7 @@ description: 咲耶シリーズのブラウザゲーム（レトロアーケー�
 
 ## 新作の手順
 
-1. テンプレートリポジトリ（`sakuya-game-template`）から新しいリポジトリを作る
+1. skill の `assets/starter/index.html` を新しいリポジトリの `index.html` として置く（kit の `demo/` を本番の読み込み方にしたもの）
 2. `gameId` を決める（英数字・`-`・`_`。ランキングのシート名になる。あとから変えない）
 3. `index.html` の `createKit({...})` に、タイトル、ボタン、トグル、`cnp`、`share` を設定する
 4. ゲーム本体を `update(kit)` / `render(ctx, kit)` に書く
@@ -26,6 +21,7 @@ description: 咲耶シリーズのブラウザゲーム（レトロアーケー�
    - 傾き操作は既定で使わない。使うときは `controls.gyro` を指定する（自前で deviceorientation を扱わない）。
      傾きが主役のゲームは `true`、おまけなら `{ autoStart: false }`
    - 1プレイの終わりは必ず `kit.gameOver({ score, cleared, rescued })`
+   - `window.kit = kit` を残す（playtest が kit の状態を読む）
    - CNP を出すなら `kit.cnp.chars` と `kit.cnp.draw()`。救出キャラは `ch.no`（1始まり）で記録する
    - 結果画面と演出動画は kit に任せる。動画は `cutscenes: { clear: {src, image}, gameOver: {src} }` に渡すだけで、
      再生、飛ばす処理、ジングルへの切り替え、結果画面の描画は書かない。独自の飾りは `resultScreen.decorate` で足す

@@ -305,6 +305,8 @@ gas/               共通ランキング用 Apps Script
 demo/              最小の動作例（テンプレートの元）
 tools/ogp.html     タイトル表記・OGP画像・アイコン・<head>・manifest.json を作るツール
 docs/INVENTORY.md  3作の共通部品の棚卸し（何を kit に入れ、何をタイトル側に残したか）
-skills/sakuyagamesskill/SKILL.md
-                   新作を作るときに Claude が従うルール（テンプレートの .claude/skills/sakuyagamesskill/ に置く）
+.claude/skills/sakuyagamesskill/
+                   新作づくりの skill（元ネタのレトロゲームと要件 → 質問で企画 → プロト → 公開 → わいわいタウン掲載）。
+                   このリポジトリを開いたセッションで自動で読まれる。references/（質問票・元ネタ表・kit のルール・公開手順）、
+                   assets/starter/（新作の index.html の土台）、scripts/（自動プレイテスト、OGP・アイコンの書き出し）
 ```
