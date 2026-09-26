@@ -170,7 +170,8 @@ function ensureColumns_(sheet) {
 }
 
 function truthy_(v) {
-  return v === true || v === 1 || /^(true|1|○|yes|クリア|ゴール)$/i.test(String(v == null ? "" : v).trim());
+  // 旧版のラリー・ジャンプバグは「はい / いいえ」で書いている
+  return v === true || v === 1 || /^(true|1|○|yes|はい|クリア|ゴール)$/i.test(String(v == null ? "" : v).trim());
 }
 
 function readRecords_(sheet) {
@@ -347,7 +348,9 @@ function doPost(e) {
       const rescued = String(rec.rescued || "").replace(/[^0-9,]/g, "").slice(0, 40);
       const cnp = rec.cnp == null || rec.cnp === "" ? parseRescued_(rescued).length : clampInt_(rec.cnp, 0, 99);
       const cleared = !!rec.cleared;
-      const progress = rec.progress == null || rec.progress === "" ? "" : clampInt_(rec.progress, 0, 100);
+      // 旧版のラリーは踏破率を paint という名前で送ってくる
+      const progRaw = rec.progress != null && rec.progress !== "" ? rec.progress : rec.paint;
+      const progress = progRaw == null || progRaw === "" ? "" : clampInt_(progRaw, 0, 100);
       if (!nickname) return jsonOut_({ success: false, error: "nickname is required" });
       if (!isFinite(score) || score < 0 || Math.floor(score) !== score) {
         return jsonOut_({ success: false, error: "invalid score" });
