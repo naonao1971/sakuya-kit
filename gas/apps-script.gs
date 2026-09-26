@@ -448,3 +448,8 @@ function importLegacySheet_(game, spreadsheetId, sourceSheetName) {
   return added;
 }
 
+
+// 末尾の "_" を付け忘れても同じように動くようにする別名
+function importLegacySheet(game, spreadsheetId, sourceSheetName) {
+  return importLegacySheet_(game, spreadsheetId, sourceSheetName);
+}
