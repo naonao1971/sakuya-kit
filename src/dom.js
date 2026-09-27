@@ -23,6 +23,7 @@ export function injectDom(cfg, canvas) {
     <div class="sk-orientation" role="alert" aria-live="assertive">
       <p class="sk-orientation-title">${escapeHTML(cfg.title || "")}</p>
       ${cfg.subtitle ? `<p class="sk-orientation-sub">${escapeHTML(cfg.subtitle)}</p>` : ""}
+      ${cfg.orientation && cfg.orientation.image ? `<img class="sk-orientation-img" src="${escapeHTML(cfg.orientation.image)}" alt="">` : ""}
       <div class="sk-orientation-icon">📱⤾</div>
       <p>横向きにしてね ⌐◨-◨</p>
       <button class="sk-fsbtn" type="button" hidden>🎮 全画面で遊ぶ</button>

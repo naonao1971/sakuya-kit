@@ -3,7 +3,7 @@
 //   node make-assets.mjs --game <ゲームのリポジトリ> --kit <sakuya-kit の clone> --visual <キービジュアル>
 //     --title "SAKUYA XXX" --subtitle "- XXX -" --name-ja "咲耶XXX" --desc "説明文（60〜90字）"
 //     --url "https://xxx.naoblock.jp/" [--kit-version 0.2.0] [--style plain|series]
-//     [--icon-x 0.5 --icon-y 0.55 --icon-zoom 2.6] [--icon-text "▶"]
+//     [--icon-x 0.5 --icon-y 0.55 --icon-zoom 2.6] [--icon-text "▶"] [--ogp-x 0.5 --ogp-y 0.5]
 //
 // 書き出すもの（ゲームのリポジトリ直下に上書き）:
 //   ogp.png(1200x630) / apple-touch-icon.png(180) / icon-192.png / icon-512.png / favicon-32.png / manifest.json
@@ -28,6 +28,8 @@ const meta = {
 };
 const opts = {
   style: args.style || "plain",
+  // OGP の切り抜き位置（0〜1）。正方形や縦長の絵で、顔が切れないよう上寄せにするときに使う
+  ogpFocusX: +(args["ogp-x"] || 0.5), ogpFocusY: +(args["ogp-y"] || 0.5),
   icon: args["icon-text"] ? { kind: "text", text: args["icon-text"] }
     : { kind: "image", focusX: +(args["icon-x"] || 0.5), focusY: +(args["icon-y"] || 0.55), zoom: +(args["icon-zoom"] || 2.6) },
 };
@@ -71,7 +73,7 @@ const out = await page.evaluate(async ({ meta, opts }) => {
   img.src = "/visual";
   await img.decode();
   const c = () => document.createElement("canvas");
-  const ogp = b.drawOgp(c(), meta, img, { style: opts.style }).toDataURL("image/png");
+  const ogp = b.drawOgp(c(), meta, img, { style: opts.style, focusX: opts.ogpFocusX, focusY: opts.ogpFocusY }).toDataURL("image/png");
   const icons = {};
   for (const [name, size] of [["apple-touch-icon.png", 180], ["icon-192.png", 192], ["icon-512.png", 512], ["favicon-32.png", 32]]) {
     icons[name] = b.drawIcon(c(), size, opts.icon, img).toDataURL("image/png");
