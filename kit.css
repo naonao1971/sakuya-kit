@@ -151,6 +151,18 @@ body.sk-fullscreen .sk-wrap canvas {
 .sk-orientation .sk-orientation-icon {
   font-size: 42px;
 }
+/* 縦持ち案内のキービジュアル（orientation.image）。画面の幅いっぱい、高さは画面の半分まで */
+.sk-orientation .sk-orientation-img {
+  display: block;
+  width: 100%;
+  max-width: min(100%, 55vh);
+  height: auto;
+  border: 2px solid var(--gold);
+  image-rendering: auto;
+}
+.sk-orientation .sk-orientation-img + .sk-orientation-icon {
+  font-size: 30px;
+}
 .sk-orientation p {
   margin: 0;
   font-family: var(--font-body);

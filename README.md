@@ -98,6 +98,7 @@
 | `controls.toggles` | `[]` | 長押しトグル `{ id, name, label, labelOff, value, onChange }` |
 | `controls.mute` / `controls.fullscreen` | `true` | 🔊 と ⛶ のトグル |
 | `share` | なし | `{ when: "clear" \| "always", text(result), image?(result) → canvas, fileName?, url? }` |
+| `orientation` | なし | `{ image }` 縦持ち案内にキービジュアルを出す（タイトルと「横向きにしてね」の間）|
 | `startAnchor` | 下端中央 | スタートボタンを置く canvas 座標 `{ x, y }` |
 | `help` | | `{ pc, mobile, playing }` の案内文 |
 | `footer` | 非公式ファンアート表記 | `false` で出さない |
