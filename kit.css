@@ -151,30 +151,19 @@ body.sk-fullscreen .sk-wrap canvas {
 .sk-orientation .sk-orientation-icon {
   font-size: 42px;
 }
-/* キービジュアル付きの縦持ち案内は、canvas の上ではなく画面全体に固定して出す。
-   canvas より縦に長くなるので、canvas の上に重ねると下のランキングにかぶり、上はアドレスバーに隠れる。
+/* キービジュアル付きの縦持ち案内は canvas より縦に長くなるので、canvas の上に重ねず、
+   canvas を隠して案内そのものをページの流れに置く（下のランキングはスクロールで見られる）。
    位置と大きさは kit.js が canvas に合わせて style に入れるので、ここでは !important で上書きする */
 .sk-orientation.sk-orientation-poster {
-  position: fixed;
-  inset: 0 !important;
-  width: auto !important;
+  position: relative;
+  left: auto !important;
+  top: auto !important;
+  width: min(calc(100vw - 24px), 560px) !important;
   height: auto !important;
   min-height: 0 !important;
-  padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
-  border: none;
-  overflow-y: auto;
-  z-index: 100;
-  /* 中身が画面より長いときに上が切れないよう、中央寄せは余白の auto で行う */
-  justify-content: flex-start;
 }
-.sk-orientation.sk-orientation-poster > :first-child {
-  margin-top: auto;
-}
-.sk-orientation.sk-orientation-poster > :last-child {
-  margin-bottom: auto;
-}
-body:has(.sk-orientation-poster.visible) {
-  overflow: hidden;
+.sk-wrap:has(.sk-orientation-poster.visible) canvas {
+  display: none;
 }
 /* 縦持ち案内のキービジュアル（orientation.image）。画面の幅いっぱい、高さは画面の半分まで */
 .sk-orientation .sk-orientation-img {
