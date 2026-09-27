@@ -20,7 +20,7 @@ export function injectDom(cfg, canvas) {
   wrap.classList.add("sk-wrap");
 
   const orientation = el(`
-    <div class="sk-orientation" role="alert" aria-live="assertive">
+    <div class="sk-orientation${cfg.orientation && cfg.orientation.image ? " sk-orientation-poster" : ""}" role="alert" aria-live="assertive">
       <p class="sk-orientation-title">${escapeHTML(cfg.title || "")}</p>
       ${cfg.subtitle ? `<p class="sk-orientation-sub">${escapeHTML(cfg.subtitle)}</p>` : ""}
       ${cfg.orientation && cfg.orientation.image ? `<img class="sk-orientation-img" src="${escapeHTML(cfg.orientation.image)}" alt="">` : ""}
