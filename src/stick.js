@@ -69,7 +69,8 @@ export function createStick({ dom, canvas, input, isPlayable, digital4 = false, 
   document.addEventListener(
     "pointerdown",
     (e) => {
-      if (joy || !playable()) return;
+      if (!playable()) return;
+      if (joy && e.pointerId === joy.id) return;
       if (area === "canvas") {
         const r = canvas.getBoundingClientRect();
         if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
@@ -77,6 +78,9 @@ export function createStick({ dom, canvas, input, isPlayable, digital4 = false, 
       // ボタン(ポーズ等)の上では出さない。ボタン自身の操作を優先する
       if (e.target && e.target.closest && e.target.closest("button, input, a")) return;
       e.preventDefault();
+      // 前の指の pointerup が届かず倒れたままになっていても、触り直せばこの指に引き継ぐ
+      // （以前は前の指が残っている間は新しい指を無視していたので、一時停止するまで戻せなかった）
+      if (joy) release();
       joy = { id: e.pointerId, ox: e.clientX, oy: e.clientY };
       show(joy.ox, joy.oy, joy.ox, joy.oy);
       updateHint();

@@ -27,7 +27,7 @@ import {
   isFullscreenActive,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.3.3";
 export { CNP_DEFS, alpha, openXIntent, pageTitle };
 
 // 総合ランキングだけを表示する（シリーズのポータルページ等、ゲームの無いページ用）。
@@ -324,8 +324,9 @@ export function createKit(cfg) {
 
 
   // 画面の右半分を押している間、指定のボタンを押す（ボタン自体・入力欄の上は除く）
+  const rightHalfTouches = new Set();
   if (controls.rightHalfButton) {
-    const touches = new Set();
+    const touches = rightHalfTouches;
     document.addEventListener(
       "pointerdown",
       (e) => {
@@ -629,6 +630,29 @@ export function createKit(cfg) {
     for (const b of holdButtons) if (b._skReset) b._skReset();
     emit("inputReset");
   }
+  // 画面から指が全部離れたのに、スティックやボタンが押しっぱなしで残るときの保険。
+  // 端末によっては pointerup / pointercancel がまれに届かず、スティックが倒れたままになる
+  // （咲耶スクランブルとジャンプバグで「右に倒したまま戻せない」が起きた）。
+  // touchend / touchcancel は別の経路で届くので、残りの指が0本になったらタッチの入力を全部離す。
+  // キーボードの入力には触らない
+  function releaseTouchInputs() {
+    if (stick) stick.release();
+    if (controls.rightHalfButton && rightHalfTouches.size) {
+      rightHalfTouches.clear();
+      pressById(controls.rightHalfButton, false, "right");
+    }
+    for (const def of buttonDefs) {
+      def._downAt = 0; // 離し損ねた指を「短いタップ」と数えて自動連射を切り替えない
+      if (def.el && def.el._skReset) def.el._skReset();
+      for (const src of [...def._src]) if (!src.startsWith("key:")) def._src.delete(src);
+      pressButton(def, def._src.size > 0);
+    }
+  }
+  const onTouchEnd = (e) => {
+    if (e.touches && e.touches.length === 0) releaseTouchInputs();
+  };
+  window.addEventListener("touchend", onTouchEnd, { passive: true });
+  window.addEventListener("touchcancel", onTouchEnd, { passive: true });
   window.addEventListener("blur", resetInputs);
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) resetInputs();
