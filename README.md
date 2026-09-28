@@ -20,14 +20,14 @@
 ## 使い方
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.3.3/kit.css">
 
 <div class="sk-wrap">
   <canvas id="game" width="960" height="540"></canvas>
 </div>
 
 <script type="module">
-  import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.js";
+  import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.3.3/kit.js";
 
   const kit = createKit({
     gameId: "scramble",                 // ランキングのシート名になる（英数字・-・_）
@@ -67,7 +67,7 @@
 
 ### バージョンは必ず固定する
 
-`@0.2.0` のようにタグを指定して読み込みます。kit を更新しても、古いタイトルは指定したバージョンのまま動き続けます。
+`@0.3.3` のようにタグを指定して読み込みます。kit を更新しても、古いタイトルは指定したバージョンのまま動き続けます。
 更新を取り込むときは、タイトル側の URL の番号を上げ、実機で確認してから公開します。
 
 ## 設定 (`createKit(cfg)`)
@@ -288,10 +288,10 @@ function importLegacy() {
 ### ゲームの無いページに総合ランキングだけ出す
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.3.3/kit.css">
 <section id="board"></section>
 <script type="module">
-  import { mountOverallRanking } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.2.0/kit.js";
+  import { mountOverallRanking } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.3.3/kit.js";
   mountOverallRanking(document.getElementById("board"), { gasUrl: "https://script.google.com/macros/s/.../exec", limit: 50 });
 </script>
 ```
