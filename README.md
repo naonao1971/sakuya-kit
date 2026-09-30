@@ -305,6 +305,7 @@ assets/cnp/        CNP 画像（256x256・透過 PNG）
 gas/               共通ランキング用 Apps Script
 demo/              最小の動作例（テンプレートの元）
 tools/ogp.html     タイトル表記・OGP画像・アイコン・<head>・manifest.json を作るツール
+docs/FEATURES.md   共通仕様のフィーチャーリスト（F1, F2, …。提案・進み具合）
 docs/GAME-GUIDE.md 新作づくりガイド（Claude・Codex などに読ませる1枚もの。人向けの使い方つき）
 docs/INVENTORY.md  3作の共通部品の棚卸し（何を kit に入れ、何をタイトル側に残したか）
 .claude/skills/sakuyagamesskill/
