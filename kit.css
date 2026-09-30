@@ -857,3 +857,132 @@ body.sk-joyhint-on .sk-joyhintcap {
   .sk-start { animation: none; }
   .sk-joyhint { animation: none; opacity: 0.8; }
 }
+
+/* ===== A・B ボタンと ⚙ 設定（controls.layout: "ab"。F3）===== */
+/* 右端に A、その左上に B（ファミコン・スーパーファミコンの手の形）、さらに左に小さな ⚙ */
+.sk-btn.sk-ab {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+}
+.sk-ab-letter {
+  font-size: 20px;
+  line-height: 1;
+}
+.sk-ab-hint {
+  margin-top: 5px;
+  font-size: 7px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+}
+.sk-btn.sk-ab-a {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.sk-btn.sk-ab-b {
+  margin-bottom: 26px;
+}
+.sk-btn.sk-settings-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  align-self: flex-end;
+  opacity: 0.8;
+}
+/* タイトル・結果画面（とPC）では ⚙ だけを出す */
+.sk-pad.sk-ab-idle .sk-ab {
+  display: none;
+}
+
+.sk-settings {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.62);
+}
+.sk-settings[hidden] {
+  display: none;
+}
+.sk-settings-panel {
+  width: min(92vw, 380px);
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 16px 18px 18px;
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius);
+  box-shadow: var(--bevel-up);
+}
+.sk-settings-title {
+  margin: 0 0 12px;
+  text-align: center;
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 13px;
+}
+.sk-set-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 6px 0;
+  padding: 11px 12px;
+  box-sizing: border-box;
+  background: var(--bg);
+  border: 2px solid var(--edge-hi);
+  border-radius: var(--radius);
+  box-shadow: var(--bevel-up);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+.sk-set-val {
+  min-width: 5.5em;
+  text-align: right;
+  color: var(--dim);
+  font-family: var(--font-display);
+  font-size: 10px;
+}
+.sk-set-row.on {
+  border-color: var(--gold);
+}
+.sk-set-row.on .sk-set-val {
+  color: var(--gold);
+}
+.sk-settings-keys {
+  margin: 10px 0 0;
+  text-align: center;
+  color: var(--dim);
+  font-size: 11px;
+}
+.sk-settings-keys:empty {
+  display: none;
+}
+.sk-settings-close {
+  display: block;
+  margin: 14px auto 0;
+  padding: 10px 26px;
+  background: var(--panel);
+  border: 2px solid var(--gold);
+  border-radius: var(--radius);
+  box-shadow: var(--bevel-up);
+  color: var(--gold);
+  font-family: var(--font-display);
+  font-size: 11px;
+  cursor: pointer;
+}

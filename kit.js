@@ -28,7 +28,10 @@ import {
   isFullscreenActive,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.4.0";
+export const VERSION = "0.5.0";
+
+const escapeHTML = (t) =>
+  String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 export { CNP_DEFS, alpha, openXIntent, pageTitle };
 
 // 総合ランキングだけを表示する（シリーズのポータルページ等、ゲームの無いページ用）。
@@ -101,8 +104,12 @@ export function createKit(cfg) {
     // 画面の右半分を押している間押すボタンの id（ボタンが見えにくい端末でも操作できる）
     rightHalfButton: null,
     muteKey: "KeyM",
+    // ボタンの並び。"classic"（既定。ボタンと長押しトグルを並べる）/
+    // "ab"（A・B の2ボタンと ⚙ 設定。音・全画面・自動連射などは ⚙ のモーダルに入る。F3）
+    layout: "classic",
     ...(cfg.controls || {}),
   };
+  const AB = controls.layout === "ab";
   // autoStart: スタート時に自動で傾き操作へ切り替える（咲耶スクランブル方式）。
   //            false なら最初はスティックで、📱 のトグルを長押しした人だけ傾き操作になる
   const gyroOpts = controls.gyro
@@ -275,6 +282,16 @@ export function createKit(cfg) {
     ? { interval: 10, defaultOn: "touch", key: "KeyV", button: null, tapMs: 250, ...controls.autoFire }
     : null;
   let autoFireOn = af ? (af.defaultOn === "touch" ? isMobile : !!af.defaultOn) : false;
+  // AB 配置では、設定で切り替えた自動連射をこの端末に残す
+  const AF_KEY = `sakuya-kit:autofire:${cfg.gameId || ""}`;
+  if (af && AB) {
+    try {
+      const v = localStorage.getItem(AF_KEY);
+      if (v === "1" || v === "0") autoFireOn = v === "1";
+    } catch (e) {
+      /* 保存できない環境では既定のまま */
+    }
+  }
   let autoFireTimer = 0;
   let autoFireToggleUi = null;
   function setAutoFire(on, announce = true) {
@@ -282,7 +299,15 @@ export function createKit(cfg) {
     autoFireOn = !!on;
     autoFireTimer = 0;
     if (autoFireToggleUi) autoFireToggleUi.set(autoFireOn);
-    const bdef = af.button && buttonDefs.find((d) => d.id === af.button);
+    const markId = af.button || af.showOn;
+    const bdef = markId && buttonDefs.find((d) => d.id === markId);
+    if (AB && announce) {
+      try {
+        localStorage.setItem(AF_KEY, autoFireOn ? "1" : "0");
+      } catch (e) {
+        /* 無視 */
+      }
+    }
     if (bdef && bdef.el) bdef.el.classList.toggle("sk-auto-on", autoFireOn);
     if (announce) status(autoFireOn ? "自動連射: オン" : "自動連射: オフ");
     emit("autoFire", autoFireOn);
@@ -291,10 +316,23 @@ export function createKit(cfg) {
   // 主ボタン・副ボタン（右端から並ぶ）
   // 1つのボタンを複数の入力元（画面のボタン・キー・スティックの上・画面右半分）から押せるので、
   // 押している入力元の集合で持ち、全部離れたときに離したことにする
-  const buttonDefs = controls.buttons.map((def) => ({ keys: [], ...def, _src: new Set(), _downAt: 0 }));
+  let buttonList = controls.buttons;
+  if (AB) {
+    // A・B の2つまで。slot（"A" / "B"）が無ければ並び順で A → B
+    buttonList = buttonList.map((d, i) => ({ ...d, slot: d.slot || (i === 0 ? "A" : "B") }));
+    buttonList.sort((a, b) => a.slot.localeCompare(b.slot));
+    if (buttonList.length > 2) console.warn("sakuya-kit: layout \"ab\" のボタンは A・B の2つまでです（3つ目以降は出しません）");
+    buttonList = buttonList.slice(0, 2);
+  }
+  const buttonDefs = buttonList.map((def) => ({ keys: [], ...def, _src: new Set(), _downAt: 0 }));
   for (const def of buttonDefs) {
     input.buttons[def.id] = false;
-    const b = makeBtn("sk-btn" + (def.primary ? " sk-primary" : ""), def.label, def.ariaLabel || def.label);
+    const b = AB
+      ? makeBtn(`sk-btn sk-ab sk-ab-${def.slot.toLowerCase()}`, "", `${def.slot}: ${def.ariaLabel || def.hint || def.label || def.id}`)
+      : makeBtn("sk-btn" + (def.primary ? " sk-primary" : ""), def.label, def.ariaLabel || def.label);
+    if (AB) {
+      b.innerHTML = `<span class="sk-ab-letter">${def.slot}</span>${def.hint ? `<span class="sk-ab-hint">${escapeHTML(def.hint)}</span>` : ""}`;
+    }
     def.el = b;
     bindPress(b, () => pressSource(def, "pad", true), () => pressSource(def, "pad", false));
     pressButtons.push(b);
@@ -349,9 +387,78 @@ export function createKit(cfg) {
     window.addEventListener("pointercancel", up);
   }
 
+  // ---- 設定のモーダル（layout: "ab" のとき。⚙ で開く）----
+  const settings = createSettings();
+  function createSettings() {
+    const root = document.createElement("div");
+    root.className = "sk-settings";
+    root.hidden = true;
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
+    root.setAttribute("aria-label", "設定");
+    root.innerHTML = `<div class="sk-settings-panel">
+        <p class="sk-settings-title">⚙ 設定</p>
+        <div class="sk-settings-list"></div>
+        <p class="sk-settings-keys"></p>
+        <button type="button" class="sk-settings-close">閉じる</button>
+      </div>`;
+    const list = root.querySelector(".sk-settings-list");
+    const keysNote = root.querySelector(".sk-settings-keys");
+    let resumeOnClose = false;
+    const api = {
+      get open() {
+        return !root.hidden;
+      },
+      show() {
+        if (!root.parentNode) document.body.appendChild(root);
+        resumeOnClose = phase === "playing" && !paused;
+        if (resumeOnClose) setPaused(true);
+        keysNote.textContent = isMobile ? "" : "キー: P 一時停止 ・ M 音" + (af && af.key ? " ・ V 自動連射" : "") + " ・ Esc 閉じる";
+        root.hidden = false;
+        const first = list.querySelector("button");
+        if (first) first.focus({ preventScroll: true });
+      },
+      hide() {
+        root.hidden = true;
+        if (resumeOnClose && phase === "playing") setPaused(false);
+        resumeOnClose = false;
+      },
+      addRow({ id, name, value, onText = "オン", offText = "オフ", onChange, state }) {
+        state[id] = !!value;
+        const row = document.createElement("button");
+        row.type = "button";
+        row.className = "sk-set-row";
+        row.innerHTML = `<span class="sk-set-name"></span><span class="sk-set-val"></span>`;
+        row.querySelector(".sk-set-name").textContent = name;
+        const val = row.querySelector(".sk-set-val");
+        const render = () => {
+          row.classList.toggle("on", state[id]);
+          val.textContent = state[id] ? onText : offText;
+          row.setAttribute("aria-pressed", state[id] ? "true" : "false");
+        };
+        render();
+        row.addEventListener("click", async () => {
+          state[id] = !state[id];
+          render();
+          if (onChange) await onChange(state[id]);
+          render();
+        });
+        list.appendChild(row);
+        return { el: row, render, set: (v) => ((state[id] = !!v), render()) };
+      },
+    };
+    root.querySelector(".sk-settings-close").addEventListener("click", () => api.hide());
+    // 枠の外（暗い所）を押しても閉じる
+    root.addEventListener("pointerdown", (e) => {
+      if (e.target === root) api.hide();
+    });
+    return api;
+  }
+
   // 長押しトグル（ゲーム固有 → ミュート → 全画面 → ジャイロ の順に内側へ）
   const toggleState = {};
-  function addToggle({ id, label, labelOff, ariaOn, ariaOff, value, iconState, onChange }) {
+  function addToggle({ id, label, labelOff, ariaOn, ariaOff, value, iconState, onChange, name, onText, offText }) {
+    if (AB) return settings.addRow({ id, name: name || ariaOn.split(":")[0], value, onText, offText, onChange, state: toggleState });
     const b = makeBtn("sk-btn sk-hold" + (iconState ? " sk-icon-state" : ""), label);
     toggleState[id] = !!value;
     const render = () => {
@@ -379,6 +486,7 @@ export function createKit(cfg) {
   function addToggleLater() {
     return addToggle({
       id: "autofire",
+      name: "自動連射",
       label: "🔫",
       ariaOn: "自動連射:オン(長押しでオフ)",
       ariaOff: "自動連射:オフ(長押しでオン)",
@@ -427,6 +535,7 @@ export function createKit(cfg) {
   if (controls.mute) {
     soundToggle = addToggle({
       id: "sound",
+      name: "効果音・BGM",
       label: "🔊",
       labelOff: "🔇",
       ariaOn: "効果音:オン(長押しでオフ)",
@@ -440,6 +549,7 @@ export function createKit(cfg) {
   if (controls.fullscreen && supportsFullscreen && isMobile) {
     fsToggle = addToggle({
       id: "fullscreen",
+      name: "全画面表示",
       label: "⛶",
       ariaOn: "全画面表示:オン(長押しでオフ)",
       ariaOff: "全画面表示:オフ(長押しでオン)",
@@ -470,6 +580,9 @@ export function createKit(cfg) {
       // アイコンが今のモードを表す: 🕹️ = タップでキー/タッチへ、📱 = タップで傾きへ
       gyroToggle = addToggle({
         id: "gyro",
+        name: "移動の操作",
+        onText: "傾き",
+        offText: "スティック",
         label: "🕹️",
         labelOff: "📱",
         ariaOn: "傾き操作:オン(長押しでキー/タッチ操作へ)",
@@ -482,6 +595,13 @@ export function createKit(cfg) {
         },
       });
     }
+  }
+
+  // ⚙（AB 配置）。A・B の左に置き、押すと設定のモーダルを開く。PC とタイトル画面でも出す
+  let settingsBtn = null;
+  if (AB) {
+    settingsBtn = makeBtn("sk-btn sk-settings-btn", "⚙", "設定を開く");
+    settingsBtn.addEventListener("click", () => settings.show());
   }
 
   const fsUi = setupFullscreenUi({
@@ -580,7 +700,9 @@ export function createKit(cfg) {
       pauseShown = showPause;
     }
 
-    const showPad = isMobile && phase === "playing" && !orientationBlocked;
+    // AB 配置では ⚙ をいつでも出し、A・B はタッチ端末のプレイ中だけ出す
+    const showPad = AB ? !orientationBlocked && !cutsceneBlocking() : isMobile && phase === "playing" && !orientationBlocked;
+    if (AB) dom.pad.classList.toggle("sk-ab-idle", !(isMobile && phase === "playing"));
     if (showPad !== padShown) {
       dom.pad.classList.toggle("visible", showPad);
       if (showPad) positionPad();
@@ -670,6 +792,14 @@ export function createKit(cfg) {
   };
   const dirOf = (code) => Object.keys(controls.keys).find((k) => controls.keys[k].includes(code));
   window.addEventListener("keydown", (e) => {
+    // 設定のモーダルを開いている間は、Esc で閉じる以外のキーをゲームに渡さない
+    if (settings.open) {
+      if (e.code === "Escape") {
+        settings.hide();
+        e.preventDefault();
+      }
+      return;
+    }
     if (cfg.onKeyDown && cfg.onKeyDown(e) === false) return;
     if (isTyping(e)) return;
     if (phase === "over" && skipCutscene()) {
@@ -972,6 +1102,7 @@ export function createKit(cfg) {
     cnp,
     ranking,
     offline,
+    settings: { open: () => settings.show(), close: () => settings.hide(), get isOpen() { return settings.open; } },
     gyro,
     isMobile,
     status,
