@@ -102,6 +102,7 @@
 | `startAnchor` | 下端中央 | スタートボタンを置く canvas 座標 `{ x, y }` |
 | `help` | | `{ pc, mobile, playing }` の案内文 |
 | `footer` | 非公式ファンアート表記 | `false` で出さない |
+| `controls.layout` | `"classic"` | `"ab"` で A・B の2ボタンと ⚙ 設定の配置にする。下の「A・B ボタンと ⚙ 設定」を参照 |
 | `offline` | `false` | `true` で機内モードでも遊べるようにする（タイトルに `sw.js` を置く）。下の「オフライン対応」を参照 |
 | `cutscenes.clear` / `cutscenes.gameOver` | なし | `{ src, image?, skippable?, blockResults?, loop? }`。下の「結果の演出」を参照 |
 | `resultScreen` | 標準の結果画面 | `{ clearTitle, gameOverTitle, mediaWidth, decorate(ctx, info) }`。`false` にすると kit は描かない |
@@ -200,6 +201,30 @@ controls: {
 - 再スタートすると動画は止まり、先頭に戻ります
 - 救出ロスターなど、タイトル独自の飾りは `resultScreen.decorate(ctx, { kind, rect, result, playing, kit })` で描き足します。`rect` は動画または静止画を描いた枠です
 - 再生中かどうかは `kit.cutscene.playing` / `kit.cutscene.kind` で分かります（パイロット窓を隠すときなど）
+
+## A・B ボタンと ⚙ 設定（シリーズ共通のボタン配置）
+
+`controls.layout: "ab"` にすると、スティックと一緒に使うボタンを **A・B の2つと ⚙（設定）** にそろえます（フィーチャーリスト F3）。
+
+```js
+controls: {
+  layout: "ab",
+  buttons: [
+    { id: "jump", slot: "A", hint: "JUMP", keys: ["KeyZ"], onPress: () => {} },
+    { id: "fire", slot: "B", hint: "SHOT", keys: ["KeyX"] },
+  ],
+  autoFire: { defaultOn: "touch", showOn: "fire" },   // 自動連射の切り替えは ⚙ の中
+  toggles: [{ id: "hard", name: "むずかしさ", onText: "HARD", offText: "NORMAL", value: false, onChange: (v) => {} }],
+}
+```
+
+- 右端に A、その左上に B、さらに左に ⚙。ボタンには大きな A / B と、`hint` の小さな文字（役割）を出す。A・B は3つ目以降を出さない
+- ⚙ を押すとゲームを止めて設定のモーダルを開き、閉じると再開する。PC とタイトル・結果画面でも ⚙ だけは出る（Esc で閉じる）
+- 設定に並ぶもの: 自動連射（`autoFire` があるとき）、効果音・BGM、全画面表示（スマホ）、移動の操作（傾き／スティック。`gyro` があるとき）、`toggles` に書いたタイトル固有の設定。
+  長押しトグル（🔊 ⛶ 🔫 🕹️）はパッドに出さない
+- 自動連射は、この端末に保存する（`sakuya-kit:autofire:<gameId>`）。`autoFire.showOn` のボタンを、オンの間マゼンタで縁取る
+- キー（P・M・V）は今までどおり
+- コードからは `kit.settings.open()` / `close()` / `isOpen`
 
 ## オフライン対応（機内モードでも遊べる）
 
