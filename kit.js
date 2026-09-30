@@ -18,6 +18,7 @@ import { createCnp, CNP_DEFS } from "./src/cnp.js";
 import { shareResult, openXIntent } from "./src/share.js";
 import { createCutscene } from "./src/cutscene.js";
 import { pageTitle } from "./src/brand.js";
+import { setupOffline } from "./src/offline.js";
 import { createScore, createLives, createCheckpoint, createCnpRun, createHud } from "./src/play.js";
 import {
   setupFullscreenUi,
@@ -27,7 +28,7 @@ import {
   isFullscreenActive,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.3.3";
+export const VERSION = "0.4.0";
 export { CNP_DEFS, alpha, openXIntent, pageTitle };
 
 // 総合ランキングだけを表示する（シリーズのポータルページ等、ゲームの無いページ用）。
@@ -178,6 +179,9 @@ export function createKit(cfg) {
   });
   const checkpoint = createCheckpoint();
   const hud = createHud({ ctx, canvas, retro, score, lives, cnp, run: cnpRun });
+  // オフライン対応（F1）。タイトルに sw.js を置き、offline: true のときだけ
+  const offline = setupOffline(cfg.offline);
+
   const ranking = createRanking({
     dom,
     gasUrl: cfg.gasUrl || "",
@@ -967,6 +971,7 @@ export function createKit(cfg) {
     retro,
     cnp,
     ranking,
+    offline,
     gyro,
     isMobile,
     status,

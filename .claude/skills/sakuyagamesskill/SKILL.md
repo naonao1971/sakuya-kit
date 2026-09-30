@@ -48,7 +48,7 @@ description: 咲耶シリーズ（CNP 二次創作・レトロアーケード風
 3. できたら知らせてもらう
 
 届いたら `add_repo` でセッションに足して clone し、作業ブランチを切る。
-`assets/starter/index.html` を `index.html` として置き、企画書の値（`gameId`・名前・操作）を入れる。
+`assets/starter/index.html` を `index.html`、`assets/starter/sw.js` を `sw.js` として置き（機内モード対応）、企画書の値（`gameId`・名前・操作）を入れる。
 `docs/PLAN.md` に企画書を置く。README に「sakuya-kit を使っている／遊び方／操作」を書く。
 sakuya-kit も手元に clone しておく（プレイテストで CDN の代わりに使う）。
 

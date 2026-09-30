@@ -205,7 +205,13 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
         cache = (d.records || []).slice().sort((a, b) => b.score - a.score);
         render();
       })
-      .catch(() => render());
+      .catch(() => {
+        render();
+        // 機内モードなどで取れなかったときは、記録が無いのではなく読めないことを伝える
+        if (!cache.length && navigator.onLine === false) {
+          dom.lbList.innerHTML = '<li class="sk-lb-empty">オフラインのため、ランキングは表示できません</li>';
+        }
+      });
   }
 
   function qualifies(score) {
@@ -359,7 +365,8 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
         }
       })
       .catch((e) => {
-        dom.submitStatus.textContent = "通信エラー: " + e.message;
+        dom.submitStatus.textContent =
+          navigator.onLine === false ? "オフラインのため登録できません。つながってから、もう一度押してください" : "通信エラー: " + e.message;
         updateSubmit();
       });
   });

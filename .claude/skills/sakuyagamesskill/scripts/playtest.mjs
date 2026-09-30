@@ -9,6 +9,7 @@
 // - スマホ横持ち: スタートボタンをタップ → 左半分のスティック → 縦持ちの案内
 // - 各場面の画面写真を --out に書き、kit の状態・ページのエラー・sakuya-kit の警告を出す。
 //   最後の行が "OK" ならエラーなし。写真は必ず自分の目で見て、崩れや読めない文字を確かめる
+// - sw.js があるタイトルは、機内モードで開き直して起動・スタートできるかも確かめる（オフライン対応 F1）
 // - ゲームには window.kit が要る（starter は出している）
 import { createRequire } from "module";
 import http from "http";
@@ -24,6 +25,8 @@ const OUT = path.resolve(args.out || "./playtest-out");
 const FILE = args.file || "index.html";
 fs.mkdirSync(OUT, { recursive: true });
 
+// Service Worker からの通信（jsDelivr の kit）も手元の kit に差し替えるための設定
+process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";
 const require = createRequire(import.meta.url);
 function loadPlaywright() {
   const tries = [process.env.PWPATH, "playwright", "/usr/local/lib/node_modules/playwright", "/usr/lib/node_modules/playwright"];
@@ -139,6 +142,36 @@ const buttonKeys = (page) => page.evaluate(() => [...document.querySelectorAll("
   await page.waitForTimeout(700);
   log("スマホ 縦持ちで止まる:", await page.evaluate(() => kit.orientationBlocked));
   await shot(page, "m-3-portrait");
+  await ctx.close();
+}
+
+// ---- 機内モード（sw.js があるタイトルだけ） ----
+if (fs.existsSync(path.join(GAME, "sw.js"))) {
+  const { ctx, page } = await newContext({ ...devices["iPhone 13 landscape"], serviceWorkers: "allow" }, "機内モード");
+  await ctx.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+  await page.goto(BASE + FILE);
+  let off = null;
+  for (let i = 0; i < 40; i++) {
+    await page.waitForTimeout(250);
+    off = await page.evaluate(() => (window.kit && kit.offline ? { ...kit.offline } : null));
+    if (off && off.cached) break;
+  }
+  log("オンラインで保存:", JSON.stringify(off));
+  if (!off || !off.enabled) problems.push("[機内モード] sw.js はあるが createKit の offline: true が無い（または kit が 0.4.0 より前）");
+  else if (!off.cached) problems.push("[機内モード] ファイルを保存できなかった");
+  await ctx.unroute("https://script.google.com/**");
+  await ctx.route("https://script.google.com/**", (r) => r.abort("internetdisconnected"));
+  await ctx.setOffline(true);
+  await page.reload().catch((e) => problems.push("[機内モード] 開き直せない: " + e.message));
+  await page.waitForTimeout(1500);
+  log("機内モードで開き直す:", JSON.stringify(await state(page)));
+  await shot(page, "off-1-title");
+  await page.tap(".sk-start").catch(() => problems.push("[機内モード] スタートボタンが無い"));
+  await page.waitForTimeout(800);
+  const ph = (await state(page)).phase;
+  log("機内モードでスタート:", ph);
+  if (ph !== "playing") problems.push("[機内モード] スタートできない");
+  await shot(page, "off-2-play");
   await ctx.close();
 }
 
