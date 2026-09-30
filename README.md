@@ -20,14 +20,14 @@
 ## 使い方
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.3.3/kit.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.4.0/kit.css">
 
 <div class="sk-wrap">
   <canvas id="game" width="960" height="540"></canvas>
 </div>
 
 <script type="module">
-  import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.3.3/kit.js";
+  import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.4.0/kit.js";
 
   const kit = createKit({
     gameId: "scramble",                 // ランキングのシート名になる（英数字・-・_）
@@ -67,7 +67,7 @@
 
 ### バージョンは必ず固定する
 
-`@0.3.3` のようにタグを指定して読み込みます。kit を更新しても、古いタイトルは指定したバージョンのまま動き続けます。
+`@0.4.0` のようにタグを指定して読み込みます。kit を更新しても、古いタイトルは指定したバージョンのまま動き続けます。
 更新を取り込むときは、タイトル側の URL の番号を上げ、実機で確認してから公開します。
 
 ## 設定 (`createKit(cfg)`)
@@ -102,6 +102,7 @@
 | `startAnchor` | 下端中央 | スタートボタンを置く canvas 座標 `{ x, y }` |
 | `help` | | `{ pc, mobile, playing }` の案内文 |
 | `footer` | 非公式ファンアート表記 | `false` で出さない |
+| `offline` | `false` | `true` で機内モードでも遊べるようにする（タイトルに `sw.js` を置く）。下の「オフライン対応」を参照 |
 | `cutscenes.clear` / `cutscenes.gameOver` | なし | `{ src, image?, skippable?, blockResults?, loop? }`。下の「結果の演出」を参照 |
 | `resultScreen` | 標準の結果画面 | `{ clearTitle, gameOverTitle, mediaWidth, decorate(ctx, info) }`。`false` にすると kit は描かない |
 | `jingle` | `true` | 動画が無い、または再生できないときに `sfx.clear()` / `sfx.gameOver()` を鳴らす |
@@ -200,6 +201,24 @@ controls: {
 - 救出ロスターなど、タイトル独自の飾りは `resultScreen.decorate(ctx, { kind, rect, result, playing, kit })` で描き足します。`rect` は動画または静止画を描いた枠です
 - 再生中かどうかは `kit.cutscene.playing` / `kit.cutscene.kind` で分かります（パイロット窓を隠すときなど）
 
+## オフライン対応（機内モードでも遊べる）
+
+一度オンラインで開いた端末なら、2回目からは機内モードでも起動して遊べます（フィーチャーリスト F1）。
+
+1. index.html と同じ場所に、次の1行だけの `sw.js` を置く（kit の版を上げても書き換えなくてよい）
+   ```js
+   importScripts(`https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@${new URL(location).searchParams.get("kit")}/sw-core.js`);
+   ```
+2. `createKit({ offline: true })` にする
+
+- kit が `sw.js?kit=<版>` を Service Worker として登録し、初回に読んだファイル（index.html・画像・kit・CNP の画像・書体）を端末に保存します
+- オンラインのときは常に通信を先に試すので、更新はそのまま届きます。機内モードや通信が遅いとき（4秒）は保存分で動きます
+- 保存しないもの: ランキング（GAS）・X のアイコン・演出動画。機内モードでは動画は流れず、ジングルと結果画面になります。
+  ランキング欄は「オフラインのため、ランキングは表示できません」、登録は「つながってから、もう一度押してください」と出ます
+- 一度も開いていない端末では、機内モードで起動できません。iOS の Safari では、しばらく開かないと保存分が消されることがあります（ホーム画面に追加していれば消されにくい）
+- jsDelivr の `sakuya-kit@<版>` から読んだときだけ動きます（手元の kit から読む demo では何もしません）
+- 状態は `kit.offline`（`enabled` / `registered` / `cached` / `version`）で分かります
+
 ## タイトル名・OGP画像・アイコンの差し替え
 
 タイトル名や絵柄はタイトルごとに違ってかまいません。全タイトルでそろえるのは**差し替えの手順と、ファイル名・サイズ・書き方**です。
@@ -288,10 +307,10 @@ function importLegacy() {
 ### ゲームの無いページに総合ランキングだけ出す
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.3.3/kit.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.4.0/kit.css">
 <section id="board"></section>
 <script type="module">
-  import { mountOverallRanking } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.3.3/kit.js";
+  import { mountOverallRanking } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.4.0/kit.js";
   mountOverallRanking(document.getElementById("board"), { gasUrl: "https://script.google.com/macros/s/.../exec", limit: 50 });
 </script>
 ```
@@ -300,6 +319,7 @@ function importLegacy() {
 
 ```
 kit.js / kit.css   入口
+sw-core.js         オフライン対応の Service Worker 本体（タイトルの sw.js から読む）
 src/               部品ごとのモジュール
 assets/cnp/        CNP 画像（256x256・透過 PNG）
 gas/               共通ランキング用 Apps Script

@@ -22,6 +22,7 @@
      傾きが主役のゲームは `true`、おまけなら `{ autoStart: false }`
    - 1プレイの終わりは必ず `kit.gameOver({ score, cleared, rescued })`
    - `window.kit = kit` を残す（playtest が kit の状態を読む）
+   - `offline: true` と `sw.js` を残す（機内モードでも遊べる。動画だけはオンラインのときだけ流れる）
    - CNP を出すなら `kit.cnp.chars` と `kit.cnp.draw()`。救出キャラは `ch.no`（1始まり）で記録する
    - 結果画面と演出動画は kit に任せる。動画は `cutscenes: { clear: {src, image}, gameOver: {src} }` に渡すだけで、
      再生、飛ばす処理、ジングルへの切り替え、結果画面の描画は書かない。独自の飾りは `resultScreen.decorate` で足す
