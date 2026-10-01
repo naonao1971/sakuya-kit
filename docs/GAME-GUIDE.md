@@ -251,14 +251,14 @@ sakuya-kit（https://github.com/naonao1971/sakuya-kit）は、全タイトル共
 ### 大原則
 
 1. **共通部分は kit に任せる。** 足りない機能はタイトル側に書かず、kit に足す（sakuya-kit への Pull Request）
-2. **kit は版を固定して読む。** `https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.1/kit.js` と同じ版の `kit.css`。`@latest` や `@main` は使わない
+2. **kit は版を固定して読む。** `https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.6.0/kit.js` と同じ版の `kit.css`。`@latest` や `@main` は使わない
 3. **見た目で変えてよいのは色トークンだけ。** `kit.css` の後に `:root { --gold: ...; }`。ボタンの寸法・配置・フォントは変えない。canvas の色は `kit.retro.colors`
 4. **タイトル側に書くのは `onStart` / `update` / `render` と、そのゲームにしかない描画・音・演出だけ**
 
 ### 書き方の要点
 
 ```js
-import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.1/kit.js";
+import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.6.0/kit.js";
 
 const kit = createKit({
   gameId: "xxx",                       // ランキングのシート名。あとから変えない

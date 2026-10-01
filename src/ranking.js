@@ -26,6 +26,39 @@ function savePlayer(p) {
   }
 }
 
+// 端末の localStorage を JSON で読み書きする（保存できない環境では何もしない）
+function readJSON(key, fallback) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || "null");
+    return v == null ? fallback : v;
+  } catch (e) {
+    return fallback;
+  }
+}
+function writeJSON(key, v) {
+  try {
+    localStorage.setItem(key, JSON.stringify(v));
+  } catch (e) {
+    /* 無視 */
+  }
+}
+const newRecordId = () =>
+  typeof crypto !== "undefined" && crypto.randomUUID
+    ? crypto.randomUUID()
+    : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 12);
+const isOffline = () => typeof navigator !== "undefined" && navigator.onLine === false;
+
+// X のアイコンが読めるかで、アカウントの実在を確かめる（送信待ちの記録を送る直前に使う）
+function checkXid(username, timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const t = setTimeout(() => resolve(null), timeoutMs); // 分からない
+    img.onload = () => (clearTimeout(t), resolve(true));
+    img.onerror = () => (clearTimeout(t), resolve(isOffline() ? null : false));
+    img.src = "https://unavatar.io/x/" + encodeURIComponent(username);
+  });
+}
+
 function withParams(gasUrl, params) {
   const u = new URL(gasUrl);
   for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
@@ -119,6 +152,16 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
   let scrollTimer = null;
 
   const endpoint = () => (gasUrl ? withParams(gasUrl, { game: gameId }) : "");
+
+  // ── オフラインのスコアを後で送る（F2） ──
+  // 送れなかった記録は「送信待ち」として端末にため、つながったとき（online）と次に開いたときに送る。
+  // 最後に取れた TOP10 も端末に残し、オフラインではそれで表示と TOP10 入りの判定をする
+  const OUTBOX_KEY = `sakuya-kit:outbox:${gameId}`;
+  const RANK_CACHE_KEY = `sakuya-kit:rank:${gameId}`;
+  let outbox = readJSON(OUTBOX_KEY, []);
+  if (!Array.isArray(outbox)) outbox = [];
+  let showingSaved = false; // 端末に残した TOP10 を出しているか
+  let flushing = false;
   const overallOn = !!gasUrl && overall !== false;
 
   // ── 「このゲーム / 総合」の切り替え ──
@@ -172,11 +215,18 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
   }
 
   function render() {
+    const pending = outbox.length
+      ? `<li class="sk-lb-empty sk-lb-pending">送信待ち ${outbox.length}件 ― つながったら自動で登録します</li>`
+      : "";
     if (!cache.length) {
-      dom.lbList.innerHTML = '<li class="sk-lb-empty">まだ記録がありません</li>';
+      dom.lbList.innerHTML =
+        (isOffline()
+          ? '<li class="sk-lb-empty">オフラインのため、ランキングは表示できません</li>'
+          : '<li class="sk-lb-empty">まだ記録がありません</li>') + pending;
       return;
     }
-    dom.lbList.innerHTML = cache
+    const note = showingSaved ? '<li class="sk-lb-empty sk-lb-offline">オフライン中 ― 最後に取得したランキングです</li>' : "";
+    dom.lbList.innerHTML = note + pending + cache
       .slice(0, 10)
       .map((r, i) => {
         const medal = medalOf(i + 1);
@@ -194,25 +244,80 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
       .join("");
   }
 
-  function load() {
+  // ランキングを取り直す。取れたら端末に残し、取れなければ端末に残した分を出す
+  function fetchList() {
     if (!gasUrl) {
       render();
-      return Promise.resolve();
+      return Promise.resolve(false);
     }
     return fetch(endpoint(), { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
         cache = (d.records || []).slice().sort((a, b) => b.score - a.score);
+        showingSaved = false;
+        writeJSON(RANK_CACHE_KEY, cache.slice(0, 10));
         render();
+        return true;
       })
       .catch(() => {
-        render();
-        // 機内モードなどで取れなかったときは、記録が無いのではなく読めないことを伝える
-        if (!cache.length && navigator.onLine === false) {
-          dom.lbList.innerHTML = '<li class="sk-lb-empty">オフラインのため、ランキングは表示できません</li>';
+        if (!cache.length) {
+          const saved = readJSON(RANK_CACHE_KEY, []);
+          if (Array.isArray(saved) && saved.length) {
+            cache = saved;
+            showingSaved = true;
+          }
         }
+        render();
+        return false;
       });
   }
+  function load() {
+    return fetchList().then((ok) => {
+      if (ok && outbox.length) flushOutbox();
+    });
+  }
+
+  function postRecord(record) {
+    return fetch(endpoint(), { method: "POST", body: JSON.stringify({ action: "add", game: gameId, record }) }).then((r) =>
+      r.json()
+    );
+  }
+
+  // 送信待ちを古い順に送る。通信できなければそこで止め、残りは次の機会に
+  async function flushOutbox() {
+    if (flushing || !outbox.length || !gasUrl || isOffline()) return;
+    flushing = true;
+    let sent = 0;
+    try {
+      while (outbox.length) {
+        const rec = { ...outbox[0] };
+        if (rec.xidPending) {
+          // オフラインで入れた X ID は、送る直前に確かめる。見つからなければ外して送る
+          const ok = rec.xid ? await checkXid(rec.xid) : true;
+          if (ok === null) break; // まだつながっていない
+          if (!ok) rec.xid = "";
+          delete rec.xidPending;
+        }
+        let d;
+        try {
+          d = await postRecord(rec);
+        } catch (e) {
+          break; // 通信できない。残りは次に
+        }
+        if (!d.success) console.warn("sakuya-kit: 送信待ちの記録を GAS が受け付けませんでした", d.error, rec);
+        outbox.shift(); // 成功（同じ記録IDで入れ済みも含む）か、受け付けられない記録は消す
+        writeJSON(OUTBOX_KEY, outbox);
+        sent++;
+      }
+    } finally {
+      flushing = false;
+    }
+    if (sent) {
+      fetchList();
+      if (overallData || tab === "overall") loadOverall(true);
+    } else render();
+  }
+  window.addEventListener("online", () => flushOutbox());
 
   function qualifies(score) {
     if (!(score > 0)) return false;
@@ -263,7 +368,7 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
 
   // ニックネーム入力済み かつ (X IDが空 または 確認済み) のときだけ登録できる
   function updateSubmit() {
-    const xidOk = xidState === "empty" || xidState === "found";
+    const xidOk = xidState === "empty" || xidState === "found" || xidState === "pending";
     dom.submit.disabled = !dom.nick.value.trim() || !xidOk;
   }
 
@@ -288,6 +393,13 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
       updateSubmit();
       return;
     }
+    if (isOffline()) {
+      // オフラインでは確かめられないので、送るときに確かめる（見つからなければ X ID を外して登録）
+      xidState = "pending";
+      setXidPreview("loading", "オフラインのため、つながってから確認します");
+      updateSubmit();
+      return;
+    }
     xidState = "loading";
     setXidPreview("loading", "確認中...");
     updateSubmit();
@@ -305,6 +417,12 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
     };
     img.onerror = () => {
       if (token !== xidToken) return;
+      if (isOffline()) {
+        xidState = "pending";
+        setXidPreview("loading", "オフラインのため、つながってから確認します");
+        updateSubmit();
+        return;
+      }
       xidState = "error";
       setXidPreview("error", "このXアカウントの名称を取得できませんでした。IDを確認してください");
       updateSubmit();
@@ -327,7 +445,7 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
       dom.nick.focus();
       return;
     }
-    if (xidState !== "empty" && xidState !== "found") {
+    if (xidState !== "empty" && xidState !== "found" && xidState !== "pending") {
       dom.submitStatus.textContent = "XのIDを確認できるまで登録できません";
       dom.xidInput.focus();
       return;
@@ -338,6 +456,7 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
     }
     const result = getResult() || {};
     const record = {
+      id: newRecordId(), // 送り直しても二重に入らないよう、記録ごとの番号を付ける（F2）
       nickname,
       xid: dom.xidInput.value.trim().replace(/^@/, ""),
       score: Math.floor(result.score || 0),
@@ -348,15 +467,34 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
       cleared: !!result.cleared,
       progress: result.progress != null ? result.progress : "",
     };
+    const done = (msg) => {
+      dom.submitStatus.textContent = msg;
+      savePlayer({ nickname: record.nickname, xid: record.xid });
+      hideForm();
+    };
+    // 送れなかった記録は送信待ちにためて、つながったら送る
+    const queue = (msg = "オフラインのため送信待ちにしました。つながったら自動で登録します") => {
+      outbox.push(xidState === "pending" && record.xid ? { ...record, xidPending: true } : record);
+      writeJSON(OUTBOX_KEY, outbox);
+      done(msg);
+      render();
+    };
+    if (isOffline()) {
+      queue();
+      return;
+    }
+    // オフラインで入れた X ID が未確認のまま、もうつながっている: 送信待ちに入れてすぐ送る（送る直前に確かめる）
+    if (xidState === "pending") {
+      queue("登録中...");
+      flushOutbox();
+      return;
+    }
     dom.submit.disabled = true;
     dom.submitStatus.textContent = "登録中...";
-    fetch(endpoint(), { method: "POST", body: JSON.stringify({ action: "add", game: gameId, record }) })
-      .then((r) => r.json())
+    postRecord(record)
       .then((d) => {
         if (d.success) {
-          dom.submitStatus.textContent = "登録しました！";
-          savePlayer({ nickname: record.nickname, xid: record.xid });
-          hideForm();
+          done("登録しました！");
           load();
           if (overallData || tab === "overall") loadOverall(true);
         } else {
@@ -364,11 +502,7 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
           updateSubmit();
         }
       })
-      .catch((e) => {
-        dom.submitStatus.textContent =
-          navigator.onLine === false ? "オフラインのため登録できません。つながってから、もう一度押してください" : "通信エラー: " + e.message;
-        updateSubmit();
-      });
+      .catch(() => queue());
   });
 
   return {
@@ -387,5 +521,9 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
     get records() {
       return cache;
     },
+    get pending() {
+      return outbox.length;
+    },
+    flush: () => flushOutbox(),
   };
 }
