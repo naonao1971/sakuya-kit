@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>SAKUYA NEW GAME ─ CATCH THE CNP</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.4.0/kit.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.0/kit.css" />
   <!-- sk:head ここまで -->
   <style>
     /* タイトル固有の色だけ上書きしてよい（部品の寸法・配置は kit のまま）。例 :root { --bg: #150f1a; } */
@@ -24,7 +24,7 @@
     <summary>遊び方</summary>
     <ul>
       <li>（何をするゲームか）</li>
-      <li>スマホ: 左半分を押したまま倒して移動 ・ 右下の X でダッシュ</li>
+      <li>スマホ: 左半分を押したまま倒して移動 ・ A でダッシュ ・ ⚙ で音・全画面・自動連射の設定</li>
       <li>PC: 矢印 / WASD で移動 ・ X でダッシュ ・ V 自動連射 ・ P 一時停止 ・ M 音</li>
       <li>姉妹作: <a href="https://sakuya.naoblock.jp/">咲耶スクランブル</a> / <a href="https://rally.naoblock.jp/">咲耶Nounラリー</a> / <a href="https://jumpbug.naoblock.jp/">咲耶ジャンプバグ</a></li>
     </ul>
@@ -33,7 +33,7 @@
   <script type="module">
     // 共通部分は sakuya-kit（https://github.com/naonao1971/sakuya-kit）。版を上げるときは
     // kit.css と同じ番号にそろえ、CHANGELOG を読んでから実機で確かめる
-    import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.4.0/kit.js";
+    import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.0/kit.js";
 
     // ===== ここから下がタイトル固有の中身（いまは kit の動作見本。企画書に合わせて置き換える） =====
     // 見本: 30秒のあいだ浮遊するCNPを集めて、岩を撃ち落とす。燃料が尽きるか残機が無くなると終わり。
@@ -73,12 +73,13 @@
         //   gyro: { autoStart: false }        … 最初はスティック。📱 を長押しした人だけ傾き操作へ
         //   gyro: { sensitivity: 0.55, deadzoneDeg: 4, maxDeg: 28 } … 効き具合の調整
         gyro: false,
+        // シリーズ共通のボタン配置: A・B の2つと ⚙ 設定（音・全画面・自動連射などは ⚙ の中）
+        layout: "ab",
         buttons: [
-          { id: "dash", label: "X", ariaLabel: "ダッシュ", keys: ["KeyX", "Space"], primary: true,
+          { id: "dash", slot: "A", hint: "DASH", ariaLabel: "ダッシュ", keys: ["KeyX", "Space"],
             onPress: () => { game.dash = 20; kit.sfx.shot(); } },
         ],
-        // 自動連射（V キー／🔫 の長押しで切り替え。タッチ端末は最初からオン）
-        //   button: "dash" にすると、X を短くタップで切り替える方式（咲耶ジャンプバグ方式）になる
+        // 自動連射（⚙ の設定と V キーで切り替え。タッチ端末は最初からオン）
         autoFire: { interval: 12, onFire: () => fire() },
       },
       share: {

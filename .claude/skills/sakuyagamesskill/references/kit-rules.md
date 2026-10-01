@@ -28,6 +28,8 @@
      再生、飛ばす処理、ジングルへの切り替え、結果画面の描画は書かない。独自の飾りは `resultScreen.decorate` で足す
    - スコア・残機・チェックポイント・CNP の回収・HUD は `kit.score` / `kit.lives` / `kit.checkpoint` / `kit.cnp.run` / `kit.hud` を使う。
      HUD の位置と見た目を独自に作らない（左上スコア、上段中央ロスター、右上残機・ゲージ）
+   - ボタンは `controls.layout: "ab"`（A・B の2つと ⚙ 設定）にそろえる。ボタンは `slot: "A" | "B"` と `hint`（役割の短い英字）。
+     音・全画面・自動連射・傾き操作の切り替えは ⚙ の設定に入るので、タイトル固有の設定も `toggles` に書いて ⚙ に入れる
    - 自動連射は `controls.autoFire`、ジャンプ等をスティックの上や画面右半分でも押せるようにするときは
      `stickUpButton` / `rightHalfButton` を使う。キーは P（ポーズ）・M（音）・V（自動連射）を変えない
    - ランキングに進み具合を残すときは `kit.gameOver({ cleared, progress })`（progress は 0〜100）
