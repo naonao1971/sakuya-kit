@@ -20,14 +20,14 @@
 ## 使い方
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.1/kit.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.6.0/kit.css">
 
 <div class="sk-wrap">
   <canvas id="game" width="960" height="540"></canvas>
 </div>
 
 <script type="module">
-  import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.1/kit.js";
+  import { createKit } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.6.0/kit.js";
 
   const kit = createKit({
     gameId: "scramble",                 // ランキングのシート名になる（英数字・-・_）
@@ -67,7 +67,7 @@
 
 ### バージョンは必ず固定する
 
-`@0.5.1` のようにタグを指定して読み込みます。kit を更新しても、古いタイトルは指定したバージョンのまま動き続けます。
+`@0.6.0` のようにタグを指定して読み込みます。kit を更新しても、古いタイトルは指定したバージョンのまま動き続けます。
 更新を取り込むときは、タイトル側の URL の番号を上げ、実機で確認してから公開します。
 
 ## 設定 (`createKit(cfg)`)
@@ -292,6 +292,16 @@ canvas の大きさ（`width` / `height` 属性）はタイトルごとに自由
 
 canvas 側の `kit.retro.colors` も同じトークンを読むので、CSS と JS の両方を直す必要はありません。
 
+## オフラインのスコアを後で送る
+
+オフライン（機内モードなど）で登録した記録は、端末に「送信待ち」としてため、つながったときと次にゲームを開いたときに自動で送ります（フィーチャーリスト F2）。設定は要りません。
+
+- 最後に取れた TOP10 を端末に残し、オフラインではそれをランキング欄に出し（「オフライン中 ― 最後に取得したランキングです」）、TOP10 入りの判定にも使う。送るときに圏外になっていても、そのまま記録する
+- オフラインで入れた X ID は、送る直前に実在を確かめ、見つからなければ X ID を外して登録する
+- 記録ごとに番号（記録ID）を付けて送り、GAS は同じ番号の記録を二度入れない（送信中に通信が切れて送り直しても重ならない）
+- 送信待ちがある間は、ランキング欄に「送信待ち N件」と出る。`kit.ranking.pending`（件数）・`kit.ranking.flush()`（今すぐ送る）
+- iOS には閉じたページの裏で送る仕組みが無いので、オンラインで一度ゲームを開いたときに送る
+
 ## ランキング（GAS）と総合ランキング
 
 [`gas/apps-script.gs`](gas/apps-script.gs) を1つのスプレッドシートにデプロイし、全タイトルでその URL を共有します。
@@ -333,10 +343,10 @@ function importLegacy() {
 ### ゲームの無いページに総合ランキングだけ出す
 
 ```html
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.1/kit.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.6.0/kit.css">
 <section id="board"></section>
 <script type="module">
-  import { mountOverallRanking } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.5.1/kit.js";
+  import { mountOverallRanking } from "https://cdn.jsdelivr.net/gh/naonao1971/sakuya-kit@0.6.0/kit.js";
   mountOverallRanking(document.getElementById("board"), { gasUrl: "https://script.google.com/macros/s/.../exec", limit: 50 });
 </script>
 ```

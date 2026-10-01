@@ -995,3 +995,11 @@ body.sk-joyhint-on .sk-joyhintcap {
   font-size: 11px;
   cursor: pointer;
 }
+
+/* ランキング欄の「オフライン中」「送信待ち」の案内（F2） */
+.sk-lb-empty.sk-lb-offline {
+  color: var(--dim);
+}
+.sk-lb-empty.sk-lb-pending {
+  color: var(--gold);
+}

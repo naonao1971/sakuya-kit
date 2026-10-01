@@ -28,7 +28,7 @@ import {
   isFullscreenActive,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.5.1";
+export const VERSION = "0.6.0";
 
 const escapeHTML = (t) =>
   String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);

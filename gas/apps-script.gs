@@ -57,7 +57,8 @@ const INITIAL_GAMES = [
   ["rally", "咲耶Nounラリー", "rally", true, 6000],
 ];
 const LEGACY_SHEET = "ranking"; // game を付けない旧版リクエストの行き先
-const HEADERS = ["スコア", "ニックネーム", "X ID", "登録日時", "端末", "救出キャラ", "回収CNP", "クリア", "進行度"];
+// 記録ID: ゲームが記録ごとに付ける番号。オフラインでためた記録を送り直したとき、二重に入れないために使う（F2）
+const HEADERS = ["スコア", "ニックネーム", "X ID", "登録日時", "端末", "救出キャラ", "回収CNP", "クリア", "進行度", "記録ID"];
 // 見出しの読み替え（旧版の各タイトルのシートの見出し → 共通の名前）
 const HEADER_ALIASES = { 踏破率: "進行度", 救出数: "回収CNP" };
 const FIELD_OF = {
@@ -70,6 +71,7 @@ const FIELD_OF = {
   回収CNP: "cnp",
   クリア: "cleared",
   進行度: "progress",
+  記録ID: "rid",
 };
 const MAX_RECORDS_RETURNED = 100;
 const MAX_OVERALL_RETURNED = 100;
@@ -351,6 +353,8 @@ function doPost(e) {
       // 旧版のラリーは踏破率を paint という名前で送ってくる
       const progRaw = rec.progress != null && rec.progress !== "" ? rec.progress : rec.paint;
       const progress = progRaw == null || progRaw === "" ? "" : clampInt_(progRaw, 0, 100);
+      // 記録ID（無ければ空。旧版のページは送ってこない）
+      const rid = String(rec.id || "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 40);
       if (!nickname) return jsonOut_({ success: false, error: "nickname is required" });
       if (!isFinite(score) || score < 0 || Math.floor(score) !== score) {
         return jsonOut_({ success: false, error: "invalid score" });
@@ -367,7 +371,14 @@ function doPost(e) {
         }
         const sheet = scoreSheet_(game.sheet, true);
         const m = ensureColumns_(sheet);
-        const values = { score: score, nickname: nickname, xid: xid, created: new Date(created), device: device, rescued: rescued, cnp: cnp, cleared: cleared, progress: progress };
+        // 同じ記録IDがもう入っていれば、入れずに成功を返す（ゲーム側は送信待ちから消してよい）
+        if (rid && m.rid !== undefined && sheet.getLastRow() > 1) {
+          const ids = sheet.getRange(2, m.rid + 1, sheet.getLastRow() - 1, 1).getValues();
+          for (let i = 0; i < ids.length; i++) {
+            if (String(ids[i][0]) === rid) return jsonOut_({ success: true, duplicate: true });
+          }
+        }
+        const values = { score: score, nickname: nickname, xid: xid, created: new Date(created), device: device, rescued: rescued, cnp: cnp, cleared: cleared, progress: progress, rid: rid };
         const width = Math.max.apply(null, Object.keys(m).map(function (k) { return m[k]; })) + 1;
         const row = new Array(width).fill("");
         Object.keys(values).forEach(function (f) {
