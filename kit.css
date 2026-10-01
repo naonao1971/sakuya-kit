@@ -888,6 +888,10 @@ body.sk-joyhint-on .sk-joyhintcap {
 .sk-btn.sk-ab-b {
   margin-bottom: 26px;
 }
+/* 自動連射がオンの間の縁取り（autoFire.showOn）は、A の金より優先する */
+.sk-btn.sk-ab.sk-auto-on {
+  border-color: var(--magenta);
+}
 .sk-btn.sk-settings-btn {
   width: 40px;
   height: 40px;
