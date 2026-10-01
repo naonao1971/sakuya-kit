@@ -28,7 +28,7 @@ import {
   isFullscreenActive,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.5.0";
+export const VERSION = "0.5.1";
 
 const escapeHTML = (t) =>
   String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -600,6 +600,12 @@ export function createKit(cfg) {
   // ⚙（AB 配置）。A・B の左に置き、押すと設定のモーダルを開く。PC とタイトル画面でも出す
   let settingsBtn = null;
   if (AB) {
+    // B を使わないタイトルでも B の場所を空けておき、⚙ をどのタイトルでも同じ位置にする
+    if (buttonDefs.length < 2) {
+      const spacer = makeBtn("sk-btn sk-ab sk-ab-b sk-ab-spacer", "");
+      spacer.setAttribute("aria-hidden", "true");
+      spacer.tabIndex = -1;
+    }
     settingsBtn = makeBtn("sk-btn sk-settings-btn", "⚙", "設定を開く");
     settingsBtn.addEventListener("click", () => settings.show());
   }

@@ -899,6 +899,11 @@ body.sk-joyhint-on .sk-joyhintcap {
   align-self: flex-end;
   opacity: 0.8;
 }
+/* B を使わないタイトルの B の場所（見えない。⚙ の位置をそろえるため） */
+.sk-btn.sk-ab-spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
 /* タイトル・結果画面（とPC）では ⚙ だけを出す */
 .sk-pad.sk-ab-idle .sk-ab {
   display: none;
