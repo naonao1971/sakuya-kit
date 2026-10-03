@@ -42,7 +42,8 @@ export function createCutscene({ wrap, src, image, loop = false, skippable = fal
     el,
     skippable,
     blockResults,
-    unlock() {
+    // onUnlocked: 解錠の再生を止めた後に呼ぶ（止まった効果音を再開させるため）
+    unlock(onUnlocked) {
       if (!src || unlocked) return;
       unlocked = true;
       if (!el.src) el.src = src;
@@ -52,7 +53,10 @@ export function createCutscene({ wrap, src, image, loop = false, skippable = fal
         p.then(() => {
           el.pause();
           el.currentTime = 0;
-        }).catch(() => {});
+          if (onUnlocked) onUnlocked();
+        }).catch(() => {
+          if (onUnlocked) onUnlocked();
+        });
       }
     },
     // 途切れずに流し切れる見込みがあるか(HAVE_FUTURE_DATA以上)。

@@ -27,7 +27,8 @@ export function createSfx() {
         SFX.master.gain.value = SFX.muted ? 0 : SFX.volume;
         SFX.master.connect(SFX.ctx.destination);
       }
-      if (SFX.ctx.state === "suspended") {
+      // iOS は suspended のほかに interrupted（ほかの音や動画に割り込まれた）になることがある
+      if (SFX.ctx.state !== "running" && SFX.ctx.state !== "closed") {
         return SFX.ctx.resume().catch(() => {});
       }
       return Promise.resolve();
