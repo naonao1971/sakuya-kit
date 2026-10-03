@@ -19,6 +19,7 @@ import { shareResult, openXIntent } from "./src/share.js";
 import { createCutscene } from "./src/cutscene.js";
 import { pageTitle } from "./src/brand.js";
 import { setupOffline } from "./src/offline.js";
+import { installAudioGuard, resumeAllAudio, trackAudioContext } from "./src/audio-guard.js";
 import { createScore, createLives, createCheckpoint, createCnpRun, createHud } from "./src/play.js";
 import {
   setupFullscreenUi,
@@ -28,7 +29,11 @@ import {
   isFullscreenActive,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.6.0";
+export const VERSION = "0.6.1";
+
+// iOS / iPadOS で、鳴らせる状態にした音が演出動画の解錠などで止まったままになるのを防ぐ（src/audio-guard.js）。
+// タイトルの script より先に動くよう、kit の読み込み時に入れる
+installAudioGuard();
 
 const escapeHTML = (t) =>
   String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -872,8 +877,10 @@ export function createKit(cfg) {
     starting = true;
     try {
       const audio = sfx.unlock();
-      // 演出動画もユーザー操作が必要なので、ここが唯一の解錠点（読み込みもここから始まる）
-      for (const cs of Object.values(cutscenes)) cs.unlock();
+      trackAudioContext(sfx.ctx);
+      // 演出動画もユーザー操作が必要なので、ここが唯一の解錠点（読み込みもここから始まる）。
+      // iOS ではこの無音の再生で、いま鳴らせる状態にした音が止まることがあるので、解錠が済んだら再開させる
+      for (const cs of Object.values(cutscenes)) cs.unlock(resumeAllAudio);
       emit("startGesture"); // その他、ユーザー操作の中で済ませたい処理
       if (isMobile && controls.fullscreen) requestFullscreen().then(() => fsUi.sync());
       if (gyro && gyro.available && isMobile) {
@@ -886,6 +893,7 @@ export function createKit(cfg) {
         }
       }
       await audio;
+      resumeAllAudio(); // 全画面・ジャイロの許可ダイアログの後にも、止まった音を戻しておく
       start();
     } finally {
       starting = false;
