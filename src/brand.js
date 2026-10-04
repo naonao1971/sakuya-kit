@@ -204,7 +204,7 @@ export function headHTML(meta) {
   const d = esc(meta.description);
   const url = meta.url || "https://example.com/";
   const og = esc(absUrl(url, "ogp.png"));
-  const v = esc(meta.kitVersion || "0.6.1");
+  const v = esc(meta.kitVersion || "0.6.2");
   return `<meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#06070C" />
