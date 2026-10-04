@@ -19,7 +19,7 @@ import { shareResult, openXIntent } from "./src/share.js";
 import { createCutscene } from "./src/cutscene.js";
 import { pageTitle } from "./src/brand.js";
 import { setupOffline } from "./src/offline.js";
-import { installAudioGuard, resumeAllAudio, trackAudioContext } from "./src/audio-guard.js";
+import { installAudioGuard, resumeAllAudio, trackAudioContext, setPlaybackAudio } from "./src/audio-guard.js";
 import { createScore, createLives, createCheckpoint, createCnpRun, createHud } from "./src/play.js";
 import {
   setupFullscreenUi,
@@ -29,7 +29,7 @@ import {
   isFullscreenActive,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.6.1";
+export const VERSION = "0.6.2";
 
 // iOS / iPadOS で、鳴らせる状態にした音が演出動画の解錠などで止まったままになるのを防ぐ（src/audio-guard.js）。
 // タイトルの script より先に動くよう、kit の読み込み時に入れる
@@ -524,6 +524,7 @@ export function createKit(cfg) {
     /* 保存できない環境では毎回オン */
   }
   async function setSound(on) {
+    setPlaybackAudio(on); // 消音モードでも鳴らす扱いは、音がオンの間だけ
     await sfx.unlock(); // オンに戻した直後から鳴るよう、ここでも起こしておく
     sfx.setMuted(!on);
     try {
@@ -876,6 +877,8 @@ export function createKit(cfg) {
     if (starting) return;
     starting = true;
     try {
+      // iPad・iPhone の消音モードでもゲームの音が鳴るよう、メディア再生として扱ってもらう（音がオンのときだけ）
+      setPlaybackAudio(!sfx.muted);
       const audio = sfx.unlock();
       trackAudioContext(sfx.ctx);
       // 演出動画もユーザー操作が必要なので、ここが唯一の解錠点（読み込みもここから始まる）。
