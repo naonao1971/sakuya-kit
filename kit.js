@@ -29,7 +29,7 @@ import {
   isFullscreenActive,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.6.2";
+export const VERSION = "0.6.3";
 
 // iOS / iPadOS で、鳴らせる状態にした音が演出動画の解錠などで止まったままになるのを防ぐ（src/audio-guard.js）。
 // タイトルの script より先に動くよう、kit の読み込み時に入れる
@@ -192,7 +192,8 @@ export function createKit(cfg) {
   const checkpoint = createCheckpoint();
   const hud = createHud({ ctx, canvas, retro, score, lives, cnp, run: cnpRun });
   // オフライン対応（F1）。タイトルに sw.js を置き、offline: true のときだけ
-  const offline = setupOffline(cfg.offline);
+  // CNP の絵は名指しで保存させる（ページの読み込みの記録に載らず、オフラインで出ないことがあった）
+  const offline = setupOffline(cfg.offline, { extraUrls: () => (cnp ? cnp.chars.map((ch) => ch.src) : []) });
 
   const ranking = createRanking({
     dom,

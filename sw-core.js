@@ -52,7 +52,14 @@
   }
   async function fromCache(req, navigate) {
     const c = await caches.open(CACHE);
-    const hit = await c.match(req, { ignoreSearch: navigate });
+    // ignoreVary: 保存したときと読み込むときで Accept などの見出しが違っても取り出す（iOS の Safari で外れていた）
+    let hit = await c.match(req, { ignoreSearch: navigate, ignoreVary: true });
+    // CORS で読む画像（kit の CNP の絵は crossOrigin 付き）に、中身の読めない形（opaque）の保存分を返すと
+    // 画像が壊れて表示されない。そういう保存分は捨てて取り直す
+    if (hit && hit.type === "opaque" && req.mode === "cors") {
+      await c.delete(req, { ignoreVary: true });
+      hit = undefined;
+    }
     if (hit || !navigate) return hit;
     // 「/」と「/index.html」のどちらで開いても出す
     return (await c.match(SCOPE)) || (await c.match(SCOPE + "index.html"));
@@ -153,7 +160,8 @@
             continue;
           }
           if (skip(req)) continue;
-          if (await c.match(req)) {
+          const have = await c.match(req, { ignoreVary: true });
+          if (have && have.type !== "opaque") {
             saved++;
             continue;
           }
@@ -161,6 +169,8 @@
           try {
             res = await fetch(req);
           } catch (e) {
+            // kit のファイル（jsDelivr）は必ず CORS で取れるので、中身の読めない形では保存しない
+            if (kitFile(url)) continue;
             // CORS の無い別サイトは中身を読めない形（opaque）で保存する
             try {
               res = await fetch(new Request(url, { mode: "no-cors" }));

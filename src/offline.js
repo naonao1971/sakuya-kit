@@ -6,7 +6,30 @@
 //
 // jsDelivr の sakuya-kit@<版> から読んだときだけ動く（版を sw.js に渡すため）。
 // 手元の kit（demo など）から読んだときは何もしない。
-export function setupOffline(opt) {
+// kit のファイル（jsDelivr の sakuya-kit@<版>/ 以下）。ページの読み込みの記録（performance）に
+// 載らないことがある（Safari のメモリやディスクの一時保存から出たときなど）ので、名指しで保存させる
+const KIT_FILES = [
+  "kit.js",
+  "kit.css",
+  "src/audio-guard.js",
+  "src/brand.js",
+  "src/buttons.js",
+  "src/cnp.js",
+  "src/cutscene.js",
+  "src/dom.js",
+  "src/fullscreen.js",
+  "src/gyro.js",
+  "src/offline.js",
+  "src/play.js",
+  "src/ranking.js",
+  "src/retro.js",
+  "src/sfx.js",
+  "src/share.js",
+  "src/stick.js",
+];
+
+// extraUrls(): 名指しで保存させたいファイル（kit が CNP の絵などを渡す）
+export function setupOffline(opt, { extraUrls } = {}) {
   const state = { enabled: false, registered: false, cached: false, version: null };
   if (!opt) return state;
   if (!("serviceWorker" in navigator)) return state;
@@ -20,9 +43,12 @@ export function setupOffline(opt) {
   const file = (typeof opt === "object" && opt.sw) || "sw.js";
 
   // 初回はページが先に読み込まれているので、読んだファイルを Service Worker に伝えて保存させる
+  const kitBase = new URL("../", import.meta.url).href;
   const collect = () => {
     const urls = new Set([location.href.split("#")[0]]);
     for (const e of performance.getEntriesByType("resource")) urls.add(e.name);
+    for (const f of KIT_FILES) urls.add(kitBase + f);
+    if (extraUrls) for (const u of extraUrls()) urls.add(u);
     return [...urls];
   };
   navigator.serviceWorker.addEventListener("message", (e) => {
