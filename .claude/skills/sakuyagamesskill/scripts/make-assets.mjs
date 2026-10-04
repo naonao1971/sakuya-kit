@@ -2,7 +2,7 @@
 //
 //   node make-assets.mjs --game <ゲームのリポジトリ> --kit <sakuya-kit の clone> --visual <キービジュアル>
 //     --title "SAKUYA XXX" --subtitle "- XXX -" --name-ja "咲耶XXX" --desc "説明文（60〜90字）"
-//     --url "https://xxx.naoblock.jp/" [--kit-version 0.6.2] [--style plain|series]
+//     --url "https://xxx.naoblock.jp/" [--kit-version 0.6.3] [--style plain|series]
 //     [--icon-x 0.5 --icon-y 0.55 --icon-zoom 2.6] [--icon-text "▶"] [--ogp-x 0.5 --ogp-y 0.5]
 //
 // 書き出すもの（ゲームのリポジトリ直下に上書き）:
@@ -24,7 +24,7 @@ if (miss.length) { console.error("足りない引数: " + miss.map((k) => "--" +
 const GAME = path.resolve(args.game), KIT = path.resolve(args.kit), VISUAL = path.resolve(args.visual);
 const meta = {
   title: args.title, subtitle: args.subtitle || "", nameJa: args["name-ja"], description: args.desc,
-  url: args.url.endsWith("/") ? args.url : args.url + "/", kitVersion: args["kit-version"] || "0.6.2",
+  url: args.url.endsWith("/") ? args.url : args.url + "/", kitVersion: args["kit-version"] || "0.6.3",
 };
 const opts = {
   style: args.style || "plain",
