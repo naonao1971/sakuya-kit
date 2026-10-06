@@ -75,7 +75,7 @@ kit の新しい版を出したら、次の全部に「版を上げる PR」を�
 | 咲耶スクランブル | naonao1971/SakuyaScramble | https://sakuya.naoblock.jp/ |
 | 咲耶Nounラリー | naonao1971/SakuyaRallyCnp | https://rally.naoblock.jp/ |
 | 咲耶ジャンプバグ | naonao1971/SakuyaJumpBug | https://jumpbug.naoblock.jp/ |
-| 咲耶ディグ | naonao1971/SakuyaDig | |
+| 咲耶ディグ | naonao1971/SakuyaDig | https://dig.naoblock.jp/ |
 | 咲耶インベーダー | naonao1971/SakuyaInvaders | https://invaders.naoblock.jp/ |
 
 新しいタイトルを公開したら、この表に1行足す。
