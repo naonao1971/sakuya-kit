@@ -210,13 +210,14 @@ sakuya-kit に機能を足したいときは、sakuya-kit リポジトリへの 
 
 canvas は 960x540 の横持ち固定。縦画面の元ネタは横向きに組み直す。
 
-### すでにある3作（骨組みの見本。近いものの index.html を読んで真似る）
+### すでにある作品（骨組みの見本。近いものの index.html を読んで真似る）
 
 | 咲耶シリーズ | 元ネタ | 中心の遊び | kit の主な設定 | リポジトリ |
 |---|---|---|---|---|
 | 咲耶スクランブル | スクランブル | 横スクロール STG。燃料を撃って補給し、洞窟で CNP を救出 | `gyro: true`、ボタン2つ、`autoFire`（🔫 トグル） | naonao1971/SakuyaScramble |
 | 咲耶Nounラリー | ラリーX | 迷路で CNP を回収して出口へ。通った跡が得点 | `stickDigital4`、`stickArea: "canvas"` | naonao1971/SakuyaRallyCnp |
 | 咲耶ジャンプバグ | ジャンプバグ | 勝手に跳ねる車で強制スクロールを抜ける | `stickUpButton` / `rightHalfButton`、`autoFire: { button }` | naonao1971/SakuyaJumpBug |
+| 咲耶インベーダー | スペースインベーダー | 編隊を撃ち、UFO にさらわれた CNP を救出。A 長押しで突き抜けるレーザー | `layout: "ab"`、左右だけ（`keys` の up/down を空に）、A の `onPress`/`onRelease` で溜め撃ち、`autoFire: { showOn }` | naonao1971/SakuyaInvaders |
 
 ### 名作の借りどころ
 

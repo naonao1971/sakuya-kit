@@ -66,6 +66,20 @@
 
 動く最小例は [`demo/index.html`](demo/index.html) です。
 
+### kit を使っているタイトル
+
+kit の新しい版を出したら、次の全部に「版を上げる PR」を出す（`kit.js` と `kit.css` の版番号を同じにそろえる）。
+
+| タイトル | リポジトリ | 公開先 |
+|---|---|---|
+| 咲耶スクランブル | naonao1971/SakuyaScramble | https://sakuya.naoblock.jp/ |
+| 咲耶Nounラリー | naonao1971/SakuyaRallyCnp | https://rally.naoblock.jp/ |
+| 咲耶ジャンプバグ | naonao1971/SakuyaJumpBug | https://jumpbug.naoblock.jp/ |
+| 咲耶ディグ | naonao1971/SakuyaDig | |
+| 咲耶インベーダー | naonao1971/SakuyaInvaders | https://invaders.naoblock.jp/ |
+
+新しいタイトルを公開したら、この表に1行足す。
+
 ### バージョンは必ず固定する
 
 `@0.6.3` のようにタグを指定して読み込みます。kit を更新しても、古いタイトルは指定したバージョンのまま動き続けます。
