@@ -577,6 +577,23 @@ body.sk-joyhint-on .sk-joyhintcap {
 .sk-lb-list[hidden] {
   display: none;
 }
+/* 総合: TOP3 の下に自分の順位と、naoblock.jp の総合ランキングへの入口 */
+.sk-lb-me {
+  margin: 12px 0 0;
+  color: var(--gold);
+  font-size: 13px;
+  text-align: center;
+}
+.sk-lb-me[hidden],
+.sk-lb-more[hidden] {
+  display: none;
+}
+.sk-lb-more {
+  display: block;
+  width: fit-content;
+  margin: 14px auto 0;
+  text-decoration: none;
+}
 .sk-lb-note {
   margin: 0 0 12px;
   color: var(--dim);

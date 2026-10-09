@@ -74,6 +74,8 @@ export function injectDom(cfg, canvas) {
       <div class="sk-lb-overall" hidden>
         <p class="sk-lb-note"></p>
         <ol class="sk-lb-list sk-lb-overall-list"></ol>
+        <p class="sk-lb-me" hidden></p>
+        <a class="sk-cta sk-lb-more" target="_blank" rel="noopener" hidden>総合ランキングをぜんぶ見る ▶</a>
       </div>
     </section>`);
   wrap.after(leaderboard);
@@ -178,6 +180,8 @@ export function injectDom(cfg, canvas) {
     lbOverall: q(leaderboard, ".sk-lb-overall"),
     lbOverallList: q(leaderboard, ".sk-lb-overall-list"),
     lbOverallNote: q(leaderboard, ".sk-lb-note"),
+    lbOverallMe: q(leaderboard, ".sk-lb-me"),
+    lbOverallMore: q(leaderboard, ".sk-lb-more"),
     register: q(leaderboard, ".sk-register"),
     nick: q(leaderboard, ".sk-nick"),
     xidInput: q(leaderboard, ".sk-xid-input"),
