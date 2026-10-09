@@ -65,6 +65,17 @@ function withParams(gasUrl, params) {
   return u.toString();
 }
 
+// どのタイトルから来たか分かるように ?from=<gameId> を付ける（#board などのアンカーは残る）
+function withFrom(url, gameId) {
+  try {
+    const u = new URL(url);
+    if (gameId) u.searchParams.set("from", gameId);
+    return u.toString();
+  } catch (e) {
+    return url;
+  }
+}
+
 // Xのアイコンとリンク
 function xHTML(rawXid) {
   const xid = String(rawXid || "").replace(/^@/, "").trim();
@@ -141,7 +152,31 @@ export function fetchOverall(gasUrl) {
   return fetch(withParams(gasUrl, { action: "overall" }), { cache: "no-store" }).then((r) => r.json());
 }
 
-export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, overall = true, maxScore = null, labels = {} }) {
+// 総合ランキングの中で、この端末で登録した人の順位（X ID があれば X ID、なければニックネームで探す）
+export function overallRankOf(data, player) {
+  const players = (data && data.players) || [];
+  const xid = String((player && player.xid) || "").replace(/^@/, "").toLowerCase();
+  const name = String((player && player.nickname) || "");
+  if (!xid && !name) return null;
+  const i = players.findIndex((p) =>
+    xid ? String(p.xid || "").replace(/^@/, "").toLowerCase() === xid : !p.xid && p.nickname === name,
+  );
+  return i < 0 ? null : { rank: i + 1, total: Math.floor(Number(players[i].total) || 0), count: players.length };
+}
+
+export function createRanking({
+  dom,
+  gasUrl,
+  gameId,
+  cnp,
+  isMobile,
+  getResult,
+  overall = true,
+  overallLink = "https://naoblock.jp/#board",
+  overallPreview = 3,
+  maxScore = null,
+  labels = {},
+}) {
   const L = { clear: "クリア", progress: "進行", ...labels };
   let cache = [];
   let tab = "game";
@@ -163,6 +198,9 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
   let showingSaved = false; // 端末に残した TOP10 を出しているか
   let flushing = false;
   const overallOn = !!gasUrl && overall !== false;
+  // 総合タブは TOP3 だけ見せ、続きは naoblock.jp（ゲームセンター）へ。overallLink: false で従来どおり TOP10 を出す
+  const moreUrl = overallLink ? withFrom(overallLink, gameId) : "";
+  const overallLimit = moreUrl ? overallPreview : 10;
 
   // ── 「このゲーム / 総合」の切り替え ──
   function setTab(next) {
@@ -172,7 +210,7 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
     }
     dom.lbList.hidden = tab !== "game";
     dom.lbOverall.hidden = tab !== "overall";
-    dom.lbTitle.textContent = tab === "overall" ? "🏆 総合ランキング TOP10" : "🏆 TOP10 ランキング";
+    dom.lbTitle.textContent = tab === "overall" ? `🏆 総合ランキング TOP${overallLimit}` : "🏆 TOP10 ランキング";
     if (tab === "overall") loadOverall(false);
   }
   if (overallOn) {
@@ -185,8 +223,13 @@ export function createRanking({ dom, gasUrl, gameId, cnp, isMobile, getResult, o
   function renderOverall() {
     dom.lbOverallNote.textContent = overallData ? overallNote(overallData) : "";
     dom.lbOverallList.innerHTML = overallData
-      ? overallRowsHTML(overallData, cnp)
+      ? overallRowsHTML(overallData, cnp, overallLimit)
       : '<li class="sk-lb-empty">読み込み中...</li>';
+    const me = moreUrl && overallData ? overallRankOf(overallData, loadPlayer()) : null;
+    dom.lbOverallMe.hidden = !me;
+    dom.lbOverallMe.textContent = me ? `あなたは総合 ${me.rank}位（${me.total}pt／${me.count}人中）` : "";
+    dom.lbOverallMore.hidden = !moreUrl;
+    if (moreUrl) dom.lbOverallMore.href = moreUrl;
   }
 
   // force=false なら一度読んだものを使い回す（タブを行き来するたびに通信しない）
