@@ -27,9 +27,10 @@ import {
   requestFullscreen,
   exitFullscreen,
   isFullscreenActive,
+  isStandaloneApp,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.7.0";
+export const VERSION = "0.8.0";
 
 // iOS / iPadOS で、鳴らせる状態にした音が演出動画の解錠などで止まったままになるのを防ぐ（src/audio-guard.js）。
 // タイトルの script より先に動くよう、kit の読み込み時に入れる
@@ -135,6 +136,22 @@ export function createKit(cfg) {
 
   const dom = injectDom(cfg, canvas);
   if (controls.stickArea === "canvas") dom.joyHintCap.textContent = "どこでも押したまま倒す";
+
+  // ---- 左上の「← もどる」（タイトル・結果画面だけ） ----
+  // 別のページから来ていて、このタブに戻り先があればそこへ戻る。
+  // 新しいタブで開いた・ホーム画面から起動した・URL を直接開いた人は、戻り先がないので naoblock.jp へ。
+  // back: false で出さない。文字列なら戻り先がないときの行き先を変える
+  const backOn = cfg.back !== false;
+  const backHome = typeof cfg.back === "string" ? cfg.back : `https://naoblock.jp/?from=${encodeURIComponent(cfg.gameId)}`;
+  const canGoBack = !!document.referrer && window.history.length > 1 && !isStandaloneApp();
+  dom.back.href = backHome;
+  dom.back.textContent = "← もどる";
+  dom.back.setAttribute("aria-label", canGoBack ? "前のページにもどる" : "naoblock.jp（ゲームセンター）へ");
+  dom.back.addEventListener("click", (e) => {
+    if (!canGoBack) return;
+    e.preventDefault();
+    window.history.back();
+  });
 
   // canvas の縦横比と、実際の表示の高さ（kit.css の大きさの計算に使う）
   document.documentElement.style.setProperty("--sk-aspect", String(canvas.width / canvas.height));
@@ -630,6 +647,7 @@ export function createKit(cfg) {
   // ---- 位置合わせ（すべて canvas の実寸基準） ----
   const startAnchor = cfg.startAnchor || { x: canvas.width / 2, y: canvas.height - 34 };
   let startShown = false;
+  let backShown = false;
   let pauseShown = null;
   let padShown = null;
 
@@ -645,6 +663,10 @@ export function createKit(cfg) {
     top = Math.max(halfH + inset, Math.min(rect.height - halfH - inset, top));
     dom.start.style.left = `${left}px`;
     dom.start.style.top = `${top}px`;
+  }
+  function positionBack() {
+    dom.back.style.left = `${canvas.offsetLeft + 8}px`;
+    dom.back.style.top = `${canvas.offsetTop + 8}px`;
   }
   function positionPause() {
     const rect = canvas.getBoundingClientRect();
@@ -669,6 +691,7 @@ export function createKit(cfg) {
   }
   function repositionAll() {
     if (startShown) positionStart();
+    if (backShown) positionBack();
     if (pauseShown) positionPause();
     if (padShown) positionPad();
     if (orientationBlocked) positionOrientation();
@@ -707,6 +730,13 @@ export function createKit(cfg) {
     dom.fsPlay.hidden = !(showStart && !fsUi.standalone) || orientationBlocked;
     if (showStart && !startShown) positionStart();
     startShown = showStart;
+
+    const showBack = backOn && showStart && !orientationBlocked;
+    if (showBack !== backShown) {
+      dom.back.style.display = showBack ? "" : "none";
+      if (showBack) positionBack();
+      backShown = showBack;
+    }
 
     const showPause = phase === "playing";
     if (showPause !== pauseShown) {

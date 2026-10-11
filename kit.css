@@ -226,6 +226,29 @@ body.sk-fullscreen .sk-wrap canvas {
   61%, 100% { opacity: 0.62; }
 }
 
+/* ===== 左上の「← もどる」（タイトル・結果画面だけ。kit.js が canvas の左上に置く） ===== */
+.sk-back {
+  position: absolute;
+  z-index: 7;
+  padding: 5px 8px;
+  border-radius: var(--radius);
+  border: 2px solid var(--edge-hi);
+  background: var(--panel);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  opacity: 0.85;
+  box-shadow: var(--bevel-up);
+  touch-action: manipulation;
+}
+.sk-back:active {
+  box-shadow: var(--bevel-down);
+  transform: translateY(2px);
+}
+
 /* ===== ポーズボタン（canvas中央。プレイ中は薄く、停止中だけはっきり） ===== */
 .sk-pause {
   position: absolute;
