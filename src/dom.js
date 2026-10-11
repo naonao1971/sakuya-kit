@@ -33,6 +33,10 @@ export function injectDom(cfg, canvas) {
   const pause = el(`<button class="sk-pause" type="button" aria-label="一時停止" style="display:none">⏸</button>`);
   wrap.appendChild(pause);
 
+  // 左上の「← もどる」。行き先とラベルは kit.js が決める
+  const back = el(`<a class="sk-back" style="display:none"></a>`);
+  wrap.appendChild(back);
+
   const start = el(`<button class="sk-start" type="button">${escapeHTML(cfg.startLabel || "スタート")}</button>`);
   wrap.appendChild(start);
 
@@ -161,6 +165,7 @@ export function injectDom(cfg, canvas) {
     wrap,
     orientation,
     pause,
+    back,
     start,
     status,
     fsPlay,
