@@ -15,6 +15,21 @@ function el(html) {
   return t.content.firstElementChild;
 }
 
+// 結果画面のいちばん下：公式LINEへの感想と、開発ボード（naoblock.com/dev/）のこのゲームの欄への入口（0.9.0）
+// community: false で出さない。devBoard に URL を渡すと行き先を変えられる（false でボードのリンクだけ消す）
+const LINE_URL = "https://line.me/R/ti/p/@134wkonl";
+function communityHTML(cfg) {
+  if (cfg.community === false) return "";
+  const board = cfg.devBoard === false ? "" : typeof cfg.devBoard === "string" ? cfg.devBoard : `https://naoblock.com/dev/?p=${encodeURIComponent(cfg.gameId || "")}`;
+  return `<div class="sk-community">
+        <p class="sk-community-msg">💬 感想や「こんなふうにしてほしい」は、公式LINEのトークへ</p>
+        <div class="sk-community-links">
+          <a class="sk-cta sk-community-line" href="${LINE_URL}" target="_blank" rel="noopener">公式LINEで送る</a>
+          ${board ? `<a class="sk-cta sk-community-board" href="${escapeHTML(board)}" target="_blank" rel="noopener">🛠 開発ボード：次に何ができる？</a>` : ""}
+        </div>
+      </div>`;
+}
+
 export function injectDom(cfg, canvas) {
   const wrap = canvas.closest(".sk-wrap") || canvas.parentElement;
   wrap.classList.add("sk-wrap");
@@ -81,6 +96,7 @@ export function injectDom(cfg, canvas) {
         <p class="sk-lb-me" hidden></p>
         <a class="sk-cta sk-lb-more" target="_blank" rel="noopener" hidden>総合ランキングをぜんぶ見る ▶</a>
       </div>
+      ${communityHTML(cfg)}
     </section>`);
   wrap.after(leaderboard);
 
