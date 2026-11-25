@@ -928,6 +928,25 @@ body.sk-joyhint-on .sk-joyhintcap {
 .sk-btn.sk-ab-b {
   margin-bottom: 26px;
 }
+/* 押せる範囲を見た目の丸より外へ広げる（見えない ::before。0.10.0）。
+   ずれて押しても効くように。A と B の間（10px）とB と ⚙ の間は半分ずつに分けて、となりを誤って押さない */
+.sk-btn.sk-ab {
+  position: relative;
+}
+.sk-btn.sk-ab::before {
+  content: "";
+  position: absolute;
+  inset: calc(-1 * var(--ab-hit, 18px)); /* 見た目の外へ16px */
+  border-radius: 24px; /* 丸にすると、となりと分けた側の端が削れて押せなくなる */
+}
+/* 値はふち(2px)の内側から測る。-7px＝見た目の外へ5px。A と B のすき間 10px をちょうど半分ずつ */
+.sk-btn.sk-ab-a::before {
+  left: -7px;
+}
+.sk-btn.sk-ab-b::before {
+  left: -7px;
+  right: -7px;
+}
 /* 自動連射がオンの間の縁取り（autoFire.showOn）は、A の金より優先する */
 .sk-btn.sk-ab.sk-auto-on {
   border-color: var(--magenta);
