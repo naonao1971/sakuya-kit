@@ -18,6 +18,7 @@
 | 2 | 動画のオフライン再生（Range 対応） | docs/FEATURES.md F1 の後回し | 低 | M |
 | 3 | ラリーの A ボタンがレーダーの右下の角に少し重なる | docs/FEATURES.md「実機で気になれば調整」 | 低 | S |
 | 4 | プロダクトバックログと開発ボードを kit のテンプレートにする（新しいゲームは最初から docs/BACKLOG.md と /backlog/ ページ付き。中身の案は下の「4番のメモ」） | 「ゲームにもデフォルトでプロダクトバックログと開発ボードを表示できるようにテンプレート化しておく」（2026-11-19 なおなお） | 中 | L |
+| 6 | jsDelivr が止まった・提供が終わったときの「引っ越し手順書」を持っておく（今は手順を書くだけ。配り口は変えない。中身は下の「6番のメモ」） | 「サービスが止まったら初めての人はどうなる？提供が終わったら移行は？先日も365のサービスで痛い目にあった」（2026-11-26 なおなお、CDN講座の対談で） | 中 | S |
 
 共通仕様の提案と進み具合は docs/FEATURES.md。決まったものから、上の表に並べる。
 
@@ -40,6 +41,38 @@
 - 数回遊んだ人にだけ、ひとことで聞く（例：3回目のゲームオーバーで「どうだった？ 👍👎」→ 押したら LINE へ）
 - タイトル画面の「← もどる」と同じ並びに 🛠 を常に置く
 - 咲耶フットボールにも同じ部品を使えるよう、kit 側の部品として切り出す
+
+### 6番のメモ（2026-11-26 なおなおが「1（手順書だけ作る）」に決定）
+
+**止まったら何が起きるか**（2026-11-26 に各リポジトリの main を確認）
+- 咲耶シリーズ（インベーダー・ジャンプバグ・フットボール・ラリー・スクランブル・ディグ）：sw.js が版つきの kit を「中身が変わらないもの」としてスマホに保存する（sw-core.js の `kitFile`）。**一度遊んだ人は遊べる**。**初めての人は kit.js が届かず、ゲームが始まらない**
+- 組立図アプリ 2D・3D（naoblock-kit@0.1.0）：サービスワーカーなし。ブラウザの一時保存が残っていれば動くが、あてにはできない
+- naoblock.com のトップとランキング（sakuya-kit@0.2.0）：総合ランキングの欄だけ出ない（読めないときはメッセージを出す作り。ページ自体は動く）
+- jsDelivr は複数の会社の配送網を束ねているので、まるごと止まることはめったにない。本物は GitHub にタグごと残るので、**引っ越しはアドレスの書き換えで済む**
+
+**書き換える場所**（`cdn.jsdelivr.net/gh/naonao1971/` を含むところ。*.md を除く）
+
+| リポジトリ | ファイル | 中身 |
+| --- | --- | --- |
+| sakuya-kit | sw-core.js | `kitFile` の判定（jsDelivr のアドレスを見て「中身が変わらない」と決めている）と、冒頭の説明 |
+| sakuya-kit | src/brand.js | 新作の `<head>` に書き出す kit.css のアドレス |
+| sakuya-kit | .claude/skills/sakuyagamesskill/assets/starter/ | 新作のひな形の index.html・sw.js |
+| SakuyaInvaders・SakuyaJumpBug・SakuyaFootball・SakuyaRallyCnp・SakuyaScramble・SakuyaDig | index.html | kit.css と kit.js（各2か所） |
+| 同じ6本 | sw.js | sw-core.js を読むアドレス |
+| naoblock | index.html・ranking/index.html | sakuya-kit@0.2.0/kit.js |
+| naoblock-kit | README.md・.claude/skills/naoblock/references/kit-change.md | 使い方と確認手順のアドレス |
+| naoblock-builder | src/kit.js | naoblock-kit@0.1.0/kit.js |
+| naoblock-builder-3d | kit.js | naoblock-kit@0.1.0/kit.js |
+
+**手順**
+1. 引っ越し先を決める。候補：①Cloudflare Pages（naoblock.com と同じ。タグごとのフォルダに写しを置く）②GitHub Pages ③ほかの CDN。ちーちゃんのおすすめは①（もう使っているので増えるものがない）
+2. 今使っている版（各ゲームが読んでいる版）の kit.js・kit.css・sw-core.js を、タグから取り出して引っ越し先に置く。版ごとに中身を変えないこと（変えると、保存済みのスマホと食い違う）
+3. sakuya-kit：`kitFile` の判定に新しいアドレスも足す（古いアドレスも残す）→ 新しい版を出す
+4. 各ゲーム：index.html・sw.js のアドレスを書き換える。sw.js の判定が古い版のままだと新しいアドレスを保存しないので、kit の版も 3 の版に上げる
+5. naoblock・組立図アプリ 2D・3D のアドレスを書き換える
+6. 確かめる：各本番を「初めての人」（シークレットウィンドウ）と「前に遊んだ人」（いつものスマホ）の両方で開いて、ゲームが始まること
+
+**やらないと決めたこと**：予備の配り口（jsDelivr から届かなければ別の場所を読む）は、今は足さない。止まる心配は小さいので、心配が大きくなったら足す
 
 ## 済み
 
