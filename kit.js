@@ -30,7 +30,7 @@ import {
   isStandaloneApp,
 } from "./src/fullscreen.js";
 
-export const VERSION = "0.10.0";
+export const VERSION = "0.11.0";
 
 // iOS / iPadOS で、鳴らせる状態にした音が演出動画の解錠などで止まったままになるのを防ぐ（src/audio-guard.js）。
 // タイトルの script より先に動くよう、kit の読み込み時に入れる
@@ -223,6 +223,7 @@ export function createKit(cfg) {
     overallLink: cfg.overallLink,
     overallPreview: cfg.overallPreview,
     maxScore: cfg.maxScore,
+    bestOnly: !!cfg.bestOnly,
     labels: cfg.rankingLabels,
   });
 

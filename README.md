@@ -103,6 +103,7 @@ kit の新しい版を出したら、次の全部に「版を上げる PR」を�
 | `lives` | なし | `{ start: 3, extendEvery: 20000 }`（`true` なら3機・1UPなし） |
 | `hiScoreKey` | `sakuya-kit:hi:<gameId>` | 旧版のハイスコアを引き継ぐときに、旧版の localStorage のキーを指定 |
 | `maxScore` | なし | これを超える記録は登録フォームを出さない（GAS の `_games` のスコア上限と同じ値にする） |
+| `bestOnly` | `false` | `true` で TOP10 を 1人1行に（同じ人はいちばん高い記録だけ。X ID、無ければニックネームで見分ける） |
 | `rankingLabels` | `{ clear: "クリア", progress: "進行" }` | ランキングの2段目の言葉（ラリーなら `progress: "踏破"`） |
 | `controls.stick` | `true` | 左半分のバーチャルスティック |
 | `controls.stickArea` | `"left"` | スティックを出せる範囲。`"canvas"` にすると canvas の上ならどこでも（迷路系向け） |

@@ -176,6 +176,7 @@ export function createRanking({
   overallPreview = 3,
   maxScore = null,
   labels = {},
+  bestOnly = false,
 }) {
   const L = { clear: "クリア", progress: "進行", ...labels };
   let cache = [];
@@ -288,6 +289,22 @@ export function createRanking({
   }
 
   // ランキングを取り直す。取れたら端末に残し、取れなければ端末に残した分を出す
+  // bestOnly: 1人1行（その人のいちばん高い記録だけ）。人の見分け方は GAS の総合と同じ
+  // （X ID があれば X ID・大文字小文字は区別しない、無ければニックネーム）
+  const playerKey = (r) => {
+    const x = String(r.xid || "").trim().replace(/^@/, "").toLowerCase();
+    return x ? `x:${x}` : `n:${String(r.nickname || "").trim()}`;
+  };
+  const bestPerPlayer = (list) => {
+    const seen = new Set();
+    return list.filter((r) => {
+      const k = playerKey(r);
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  };
+
   function fetchList() {
     if (!gasUrl) {
       render();
@@ -297,6 +314,7 @@ export function createRanking({
       .then((r) => r.json())
       .then((d) => {
         cache = (d.records || []).slice().sort((a, b) => b.score - a.score);
+        if (bestOnly) cache = bestPerPlayer(cache);
         showingSaved = false;
         writeJSON(RANK_CACHE_KEY, cache.slice(0, 10));
         render();
@@ -368,6 +386,14 @@ export function createRanking({
     if (maxScore != null && score > maxScore) {
       console.warn(`sakuya-kit: スコア ${score} が maxScore ${maxScore} を超えています`);
       return false;
+    }
+    if (bestOnly) {
+      // 前に登録した名前で、もう同じかそれより高い記録があれば出さない（登録しても表は変わらないので）
+      const saved = loadPlayer();
+      if (saved.nickname) {
+        const mine = cache.find((r) => playerKey(r) === playerKey(saved));
+        if (mine && score <= Number(mine.score)) return false;
+      }
     }
     if (cache.length < 10) return true;
     return score > cache[9].score;
