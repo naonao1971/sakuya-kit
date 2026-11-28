@@ -535,6 +535,7 @@ export function createRanking({
       cnp: result.cnp != null ? result.cnp : "",
       cleared: !!result.cleared,
       progress: result.progress != null ? result.progress : "",
+      course: result.course != null ? String(result.course).slice(0, 40) : "", // どのコース（ステージ・絵など）か。GAS 0.12.0〜で残る
     };
     const done = (msg) => {
       dom.submitStatus.textContent = msg;

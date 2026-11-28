@@ -183,7 +183,8 @@ controls: {
 | HUD | `kit.hud.score()`（左上）、`kit.hud.roster()`（上段中央）、`kit.hud.lives()`（右上）、`kit.hud.gauge({ label: "FUEL", ratio })` |
 
 - どれもスタートのたびに kit が初期化します
-- `kit.gameOver({ cleared, progress })` だけ呼べば、スコアは `kit.score.value`、救出キャラは `kit.cnp.run.list()` が使われ、ハイスコアも保存されます（明示して渡すこともできます）
+- `kit.gameOver({ cleared, progress, course })` だけ呼べば、スコアは `kit.score.value`、救出キャラは `kit.cnp.run.list()` が使われ、ハイスコアも保存されます（明示して渡すこともできます）
+- `course` は任意。どのコース（ステージ・絵など）で出した記録かを、ランキングのシートの「コース」列に残します（0.12.0〜。GAS の貼り直しとデプロイが要ります。表示はしません）
 - ランキングには、クリア・進行度（0〜100）・CNP の体数も記録され、2段目に表示されます
 
 ## ジャイロ操作（使うタイトルだけ）

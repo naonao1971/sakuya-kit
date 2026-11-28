@@ -58,7 +58,8 @@ const INITIAL_GAMES = [
 ];
 const LEGACY_SHEET = "ranking"; // game を付けない旧版リクエストの行き先
 // 記録ID: ゲームが記録ごとに付ける番号。オフラインでためた記録を送り直したとき、二重に入れないために使う（F2）
-const HEADERS = ["スコア", "ニックネーム", "X ID", "登録日時", "端末", "救出キャラ", "回収CNP", "クリア", "進行度", "記録ID"];
+// コース: どのコース（ステージ・絵など）で出した記録か。ナオブロックビルダー2D なら絵の名前（0.12.0〜。表示はまだしない）
+const HEADERS = ["スコア", "ニックネーム", "X ID", "登録日時", "端末", "救出キャラ", "回収CNP", "クリア", "進行度", "記録ID", "コース"];
 // 見出しの読み替え（旧版の各タイトルのシートの見出し → 共通の名前）
 const HEADER_ALIASES = { 踏破率: "進行度", 救出数: "回収CNP" };
 const FIELD_OF = {
@@ -72,6 +73,7 @@ const FIELD_OF = {
   クリア: "cleared",
   進行度: "progress",
   記録ID: "rid",
+  コース: "course",
 };
 const MAX_RECORDS_RETURNED = 100;
 const MAX_OVERALL_RETURNED = 100;
@@ -205,6 +207,7 @@ function readRecords_(sheet) {
         cnp: cnpRaw === "" || cnpRaw == null ? listCount : Number(cnpRaw) || 0,
         cleared: truthy_(at(r, "cleared")),
         progress: prog === "" || prog == null ? null : Number(prog),
+        course: String(at(r, "course") || ""),
       };
     });
 }
@@ -355,6 +358,8 @@ function doPost(e) {
       const progress = progRaw == null || progRaw === "" ? "" : clampInt_(progRaw, 0, 100);
       // 記録ID（無ければ空。旧版のページは送ってこない）
       const rid = String(rec.id || "").replace(/[^A-Za-z0-9-]/g, "").slice(0, 40);
+      // コース（無ければ空）。改行などは落とし、先頭の = + - @ は外す（シートで数式として動かないように）
+      const course = String(rec.course || "").replace(/[\u0000-\u001f\u007f]/g, "").trim().replace(/^[=+\-@]+/, "").slice(0, 40);
       if (!nickname) return jsonOut_({ success: false, error: "nickname is required" });
       if (!isFinite(score) || score < 0 || Math.floor(score) !== score) {
         return jsonOut_({ success: false, error: "invalid score" });
@@ -378,7 +383,7 @@ function doPost(e) {
             if (String(ids[i][0]) === rid) return jsonOut_({ success: true, duplicate: true });
           }
         }
-        const values = { score: score, nickname: nickname, xid: xid, created: new Date(created), device: device, rescued: rescued, cnp: cnp, cleared: cleared, progress: progress, rid: rid };
+        const values = { score: score, nickname: nickname, xid: xid, created: new Date(created), device: device, rescued: rescued, cnp: cnp, cleared: cleared, progress: progress, rid: rid, course: course };
         const width = Math.max.apply(null, Object.keys(m).map(function (k) { return m[k]; })) + 1;
         const row = new Array(width).fill("");
         Object.keys(values).forEach(function (f) {
@@ -442,6 +447,7 @@ function importLegacySheet_(game, spreadsheetId, sourceSheetName) {
         cnp: r.cnp,
         cleared: r.cleared,
         progress: r.progress == null ? "" : r.progress,
+        course: r.course || "",
       };
       const row = new Array(width).fill("");
       Object.keys(values).forEach(function (f) {
